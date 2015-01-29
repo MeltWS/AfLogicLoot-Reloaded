@@ -353,7 +353,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		
 		if (tItemDI.arSpells and tItemDI.arClassRequirement and tItemDI.arClassRequirement.bRequirementMet) or (tItemDI.arTradeskillReqs and tItemDI.arTradeskillReqs[1].bCanLearn) then		
 			bNeed = true
-			-- ignore level requirement? yes, i thing it's better.
+			-- ignore level requirement? yes, i think it's better.
 			if (tItemDI.arSpells and tItemDI.arSpells[1].strFailure) or (tItemDI.arTradeskillReqs and tItemDI.arTradeskillReqs[1].bIsKnown) then
 	            bNeed = false
 	        end
