@@ -55,6 +55,7 @@ function AfLogicLoot:new(o)
 
     -- default settings
 	o.settings = {
+		log = true,
 		decor = {
 			quality = ItemQuality.inferior,
 			below = LootAction.none,
@@ -179,6 +180,7 @@ end
 
 
 function AfLogicLoot:SettingsToGUI()
+	self.wndMain:FindChild("chk_log"):SetCheck(self.settings.log)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.settings.decor.quality)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.settings.decor.below)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):SetRadioSel("decor_above", self.settings.decor.above)
@@ -198,6 +200,7 @@ end
 
 
 function AfLogicLoot:GUIToSettings()
+	self.settings.log = self.wndMain:FindChild("chk_log"):IsChecked()
 	self.settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
 	self.settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
 	self.settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
@@ -232,6 +235,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 		if tSavedData.settings ~= nil then
 			-- replacing single values to not overwrite new default values by not existing values
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
+			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
 			if tSavedData.settings.decor ~= nil then
 				if tSavedData.settings.decor.quality ~= nil then self.settings.decor.quality = tSavedData.settings.decor.quality end
 				if tSavedData.settings.decor.below ~= nil then self.settings.decor.below = tSavedData.settings.decor.below end
@@ -282,6 +286,20 @@ function AfLogicLoot:OnLootRollUpdate()
 end
 
 
+function AfLogicLoot:PostLootMessage(uItem, iChoice, strCategory)
+	if iChoice == LootAction.none then return end
+	if not self.settings.log then return end
+	
+	local strMessage = "Selecting "
+	if iChoice == LootAction.need then strMessage = strMessage .. "NEED" end
+	if iChoice == LootAction.greed then strMessage = strMessage .. "GREED" end
+	strMessage = strMessage .. " "
+	if iChoice == LootAction.pass then strMessage = "PASSING " end
+	strMessage = strMessage .. "on ".. uItem:GetChatLinkString() .. " from category " .. strCategory
+	self:log(strMessage)
+end
+
+
 function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	local item = LootListEntry.itemDrop
 	local lootid = LootListEntry.nLootId
@@ -295,9 +313,11 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	if (itype == 155) then
 		if quality <= self.settings.decor.quality then
 			self:DoLootAction(lootid, self.settings.decor.below)
+			self:PostLootMessage(item, self.settings.decor.below, "Decor of and below selected quality")
 			return
 		else
 			self:DoLootAction(lootid, self.settings.decor.above)
+			self:PostLootMessage(item, self.settings.decor.above, "Decor above selected quality")
 			return
 		end
 	end
@@ -306,18 +326,21 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	--  signs                rune fragments
 	if (category == 120) or (itype == 359) then
 		self:DoLootAction(lootid, self.settings.runes.all)
+		self:PostLootMessage(item, self.settings.runes.all, "Sigils and Fragments")
 		return
 	end
 		
 	-- Survivalist
 	if (category == 110) then
 		self:DoLootAction(lootid, self.settings.survivalist.all)
+		self:PostLootMessage(item, self.settings.survivalist.all, "Survivalist")
 		return
 	end
 	
 	-- Cloth
 	if (category == 113) then
 		self:DoLootAction(lootid, self.settings.cloth.all)
+		self:PostLootMessage(item, self.settings.cloth.all, "Cloth")
 		return
 	end
 	
@@ -325,24 +348,28 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	--  dye collection    dye
 	if (itype == 349) or (itype == 332) then
 		self:DoLootAction(lootid, self.settings.dye.all)
+		self:PostLootMessage(item, self.settings.dye.all, "Dye")
 		return
 	end
 		
 	-- Flux
 	if (itype == 465) then
 		self:DoLootAction(lootid, self.settings.flux.all)
+		self:PostLootMessage(item, self.settings.flux.all, "Runic Flux")
 		return
 	end
 	
 	-- Proprietary Material
 	if (category == 128) then
 		self:DoLootAction(lootid, self.settings.prop.all)
+		self:PostLootMessage(item, self.settings.runes.all, "Proprietary Material")
 		return
 	end
 	
 	-- Bags
 	if (itype == 134) then
 		self:DoLootAction(lootid, self.settings.bags.all)
+		self:PostLootMessage(item, self.settings.runes.all, "Bags")
 		return
 	end
 	
@@ -361,11 +388,14 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		
 		if bNeed then
 			self:DoLootAction(lootid, LootAction.need)
+			self:PostLootMessage(item, LootAction.need, "AMP and Schematics you don't already own")
 		else
 			if (family == 32) then
 				self:DoLootAction(lootid, self.settings.amps.all)
+				self:PostLootMessage(item, self.settings.amps.all, "AMP")
 			else
 				self:DoLootAction(lootid, self.settings.schematics.all)
+				self:PostLootMessage(item, self.settings.schematics.all, "Schematics")
 			end
 		end
 		
@@ -375,18 +405,21 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	-- Equipment
 	if not GameLib.IsNeedRollAllowed(lootid) then
 		self:DoLootAction(lootid, self.settings.equipment.noneed)
+		self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not needable")
 		return
 	else
 		if item:IsEquippable() then
 			if quality <= self.settings.equipment.quality then
 				self:DoLootAction(lootid, self.settings.equipment.below)
+				self:PostLootMessage(item, self.settings.equipment.below, "Equipment")
 			end
 			return
 		end
 	end
 	
+	
 	-- Not categorized now: analyze it
-	-- self:analyze(item)
+	self:analyze(item)
 end
 
 
