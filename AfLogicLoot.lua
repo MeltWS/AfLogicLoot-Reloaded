@@ -61,7 +61,7 @@ function AfLogicLoot:new(o)
 			below = LootAction.none,
 			above = LootAction.none,
 		},
-		runes = {
+		fragments = {
 			all = LootAction.none,
 		},
 		survivalist = {
@@ -71,6 +71,11 @@ function AfLogicLoot:new(o)
 			quality = ItemQuality.good,
 			below = LootAction.none,
 			noneed = LootAction.none,
+		},
+		sigils = {
+			quality = ItemQuality.good,
+			below = LootAction.none,
+			above = LootAction.none,
 		},
 		bags = {
 			all = LootAction.none,
@@ -154,6 +159,8 @@ function AfLogicLoot:OnDocLoaded()
 			self:OnConfigure()
 			self.settings.firstconfigureshown = true
 		end
+		self.wndMain:FindChild("btn_equipment1"):SetCheck(true)
+		self:SwitchToTab(1)
 	end
 end
 
@@ -184,11 +191,14 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.settings.decor.quality)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.settings.decor.below)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):SetRadioSel("decor_above", self.settings.decor.above)
-	self.wndMain:FindChild("frm_runes"):FindChild("frm_action"):SetRadioSel("runes_all", self.settings.runes.all)
+	self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):SetRadioSel("fragments_all", self.settings.fragments.all)
 	self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):SetRadioSel("survivalist_all", self.settings.survivalist.all)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):SetRadioSel("equipment_quality", self.settings.equipment.quality)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):SetRadioSel("equipment_below", self.settings.equipment.below - 1)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):SetRadioSel("equipment_noneed", self.settings.equipment.noneed - 1)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):SetRadioSel("sigil_quality", self.settings.sigils.quality)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):SetRadioSel("sigil_below", self.settings.sigils.below)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):SetRadioSel("sigil_above", self.settings.sigils.above)
 	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.settings.bags.all)
 	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.settings.amps.all)
 	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.settings.schematics.all)
@@ -204,11 +214,14 @@ function AfLogicLoot:GUIToSettings()
 	self.settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
 	self.settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
 	self.settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
-	self.settings.runes.all = self.wndMain:FindChild("frm_runes"):FindChild("frm_action"):GetRadioSel("runes_all")
+	self.settings.fragments.all = self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):GetRadioSel("fragments_all")
 	self.settings.survivalist.all = self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):GetRadioSel("survivalist_all")
 	self.settings.equipment.quality = self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):GetRadioSel("equipment_quality")
 	self.settings.equipment.below = self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):GetRadioSel("equipment_below") + 1
 	self.settings.equipment.noneed = self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):GetRadioSel("equipment_noneed") + 1
+	self.settings.sigils.quality = self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):GetRadioSel("sigil_quality")
+	self.settings.sigils.below = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):GetRadioSel("sigil_below")
+	self.settings.sigils.above = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):GetRadioSel("sigil_above")	
 	self.settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
 	self.settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
 	self.settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
@@ -241,8 +254,8 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 				if tSavedData.settings.decor.below ~= nil then self.settings.decor.below = tSavedData.settings.decor.below end
 				if tSavedData.settings.decor.above ~= nil then self.settings.decor.above = tSavedData.settings.decor.above end
 			end
-			if tSavedData.settings.runes ~= nil then
-				if tSavedData.settings.runes.all ~= nil then self.settings.runes.all = tSavedData.settings.runes.all end
+			if tSavedData.settings.fragments ~= nil then
+				if tSavedData.settings.fragments.all ~= nil then self.settings.fragments.all = tSavedData.settings.fragments.all end
 			end
 			if tSavedData.settings.survivalist ~= nil then
 				if tSavedData.settings.survivalist.all ~= nil then self.settings.survivalist.all = tSavedData.settings.survivalist.all end
@@ -252,6 +265,11 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 				if tSavedData.settings.equipment.below ~= nil then self.settings.equipment.below = tSavedData.settings.equipment.below end
 				if tSavedData.settings.equipment.noneed ~= nil then self.settings.equipment.noneed = tSavedData.settings.equipment.noneed end
 			end
+			if tSavedData.settings.sigils ~= nil then
+				if tSavedData.settings.sigils.quality ~= nil then self.settings.sigils.quality = tSavedData.settings.sigils.quality end
+				if tSavedData.settings.sigils.below ~= nil then self.settings.sigils.below = tSavedData.settings.sigils.below end
+				if tSavedData.settings.sigils.above ~= nil then self.settings.sigils.above = tSavedData.settings.sigils.above end
+			end			
 			if tSavedData.settings.bags ~= nil then
 				if tSavedData.settings.bags.all ~= nil then self.settings.bags.all = tSavedData.settings.bags.all end
 			end
@@ -314,19 +332,29 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		if quality <= self.settings.decor.quality then
 			self:DoLootAction(lootid, self.settings.decor.below)
 			self:PostLootMessage(item, self.settings.decor.below, "Decor of and below selected quality")
-			return
 		else
 			self:DoLootAction(lootid, self.settings.decor.above)
 			self:PostLootMessage(item, self.settings.decor.above, "Decor above selected quality")
-			return
 		end
+		return
 	end
 	
-	-- Runes and Fragments
-	--  signs                rune fragments
-	if (category == 120) or (itype == 359) then
-		self:DoLootAction(lootid, self.settings.runes.all)
-		self:PostLootMessage(item, self.settings.runes.all, "Sigils and Fragments")
+	-- Fragments
+	if (itype == 359) then
+		self:DoLootAction(lootid, self.settings.fragments.all)
+		self:PostLootMessage(item, self.settings.fragments.all, "Fragments")
+		return
+	end
+
+	-- Sigils
+	if (category == 120) then
+		if quality <= self.settings.sigils.quality then
+			self:DoLootAction(lootid, self.settings.sigils.below)
+			self:PostLootMessage(item, self.settings.sigils.below, "Sigils of and below selected quality")
+		else
+			self:DoLootAction(lootid, self.settings.sigils.above)
+			self:PostLootMessage(item, self.settings.sigils.above, "Sigils above selected quality")
+		end		
 		return
 	end
 		
@@ -480,6 +508,19 @@ function AfLogicLoot:OnCancel()
 	self.wndMain:Close()
 end
 
+
+function AfLogicLoot:OnTabSelected(wndHandler, wndControl, eMouseButton)
+	local iTab = self.wndMain:GetRadioSel("tabs")
+	self:SwitchToTab(iTab)
+end
+
+
+function AfLogicLoot:SwitchToTab(iTab)
+	self.wndMain:FindChild("Tab_Equipment1"):Show(iTab == 1)
+	self.wndMain:FindChild("Tab_Equipment2"):Show(iTab == 2)
+	self.wndMain:FindChild("Tab_Style"):Show(iTab == 3)
+	self.wndMain:FindChild("Tab_Crafting"):Show(iTab == 4)
+end
 
 -----------------------------------------------------------------------------------------------
 -- AfLogicLoot Instance

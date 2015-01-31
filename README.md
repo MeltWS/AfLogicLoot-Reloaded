@@ -6,7 +6,10 @@
 
 Automatically select »need« or »greed« based on you settings.
 
-![Configuration Window](http://fs1.directupload.net/images/150129/kksv2pka.jpg)
+![Configuration Window Equipment 1](http://fs2.directupload.net/images/150131/nwj8welc.jpg)
+![Configuration Window Equipment 2](http://fs2.directupload.net/images/150131/48pk8j3m.jpg)
+![Configuration Window Style](http://fs1.directupload.net/images/150131/zvun2wqo.jpg)
+![Configuration Window Crafting](http://fs1.directupload.net/images/150131/67eyjowi.jpg)
 
 When there's group loot in dungeons you can now let this addon automatically select »need« or »greed«.
 
@@ -16,4 +19,4 @@ After installation you can configure it by typing `/afloot` in any chat window o
 
 [Addon on Curse](http://curse.com/project/227397)
 
-![afLogicLoot DVD Case](http://fs1.directupload.net/images/150129/uuajlb47.png)
+![afLogicLoot DVD Case](http://fs1.directupload.net/images/150131/qvmzbu93.png)
