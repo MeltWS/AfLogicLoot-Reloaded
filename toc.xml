@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Addon Author="arnefi" APIVersion="9" Name="AfLogicLoot" Description="Automatically select »need« or »greed« based on you settings." Version="0.2">
+<Addon Author="arnefi" APIVersion="9" Name="AfLogicLoot" Description="Automatically select »need« or »greed« based on you settings." Version="0.3">
     <Script Name="AfLogicLoot.lua"/>
     <Form Name="AfLogicLoot.xml"/>
 </Addon>
