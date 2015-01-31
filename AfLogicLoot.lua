@@ -77,6 +77,18 @@ function AfLogicLoot:new(o)
 			below = LootAction.none,
 			above = LootAction.none,
 		},
+		catalysts = {
+			my = {
+				quality = ItemQuality.good,
+				below = LootAction.none,
+				above = LootAction.none,
+			},
+			other = {
+				quality = ItemQuality.good,
+				below = LootAction.none,
+				above = LootAction.none,			
+			},
+		},
 		bags = {
 			all = LootAction.none,
 		},
@@ -199,6 +211,12 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):SetRadioSel("sigil_quality", self.settings.sigils.quality)
 	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):SetRadioSel("sigil_below", self.settings.sigils.below)
 	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):SetRadioSel("sigil_above", self.settings.sigils.above)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_my", self.settings.catalysts.my.quality)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):SetRadioSel("catalyst_my_below", self.settings.catalysts.my.below)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):SetRadioSel("catalyst_my_above", self.settings.catalysts.my.above)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_other", self.settings.catalysts.other.quality)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):SetRadioSel("catalyst_other_below", self.settings.catalysts.other.below)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):SetRadioSel("catalyst_other_above", self.settings.catalysts.other.above)
 	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.settings.bags.all)
 	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.settings.amps.all)
 	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.settings.schematics.all)
@@ -222,6 +240,12 @@ function AfLogicLoot:GUIToSettings()
 	self.settings.sigils.quality = self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):GetRadioSel("sigil_quality")
 	self.settings.sigils.below = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):GetRadioSel("sigil_below")
 	self.settings.sigils.above = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):GetRadioSel("sigil_above")	
+	self.settings.catalysts.my.quality = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_my")
+	self.settings.catalysts.my.below = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):GetRadioSel("catalyst_my_below")
+	self.settings.catalysts.my.above = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):GetRadioSel("catalyst_my_above")
+	self.settings.catalysts.other.quality = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_other")
+	self.settings.catalysts.other.below = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):GetRadioSel("catalyst_other_below")
+	self.settings.catalysts.other.above = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):GetRadioSel("catalyst_other_above")
 	self.settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
 	self.settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
 	self.settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
@@ -270,6 +294,18 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 				if tSavedData.settings.sigils.below ~= nil then self.settings.sigils.below = tSavedData.settings.sigils.below end
 				if tSavedData.settings.sigils.above ~= nil then self.settings.sigils.above = tSavedData.settings.sigils.above end
 			end			
+			if tSavedData.settings.catalysts ~= nil then
+				if tSavedData.settings.catalysts.my ~= nil then
+					if tSavedData.settings.catalysts.my.quality ~= nil then self.settings.catalysts.my.quality = tSavedData.settings.catalysts.my.quality end
+					if tSavedData.settings.catalysts.my.below ~= nil then self.settings.catalysts.my.below = tSavedData.settings.catalysts.my.below end
+					if tSavedData.settings.catalysts.my.above ~= nil then self.settings.catalysts.my.above = tSavedData.settings.catalysts.my.above end
+				end						
+				if tSavedData.settings.catalysts.other ~= nil then
+					if tSavedData.settings.catalysts.other.quality ~= nil then self.settings.catalysts.other.quality = tSavedData.settings.catalysts.other.quality end
+					if tSavedData.settings.catalysts.other.below ~= nil then self.settings.catalysts.other.below = tSavedData.settings.catalysts.other.below end
+					if tSavedData.settings.catalysts.other.above ~= nil then self.settings.catalysts.other.above = tSavedData.settings.catalysts.other.above end
+				end						
+			end
 			if tSavedData.settings.bags ~= nil then
 				if tSavedData.settings.bags.all ~= nil then self.settings.bags.all = tSavedData.settings.bags.all end
 			end
@@ -413,7 +449,6 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	            bNeed = false
 	        end
 		end
-		
 		if bNeed then
 			self:DoLootAction(lootid, LootAction.need)
 			self:PostLootMessage(item, LootAction.need, "AMP and Schematics you don't already own")
@@ -430,24 +465,62 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		return
 	end
 	
-	-- Equipment
-	if not GameLib.IsNeedRollAllowed(lootid) then
-		self:DoLootAction(lootid, self.settings.equipment.noneed)
-		self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not needable")
-		return
-	else
-		if item:IsEquippable() then
-			if quality <= self.settings.equipment.quality then
-				self:DoLootAction(lootid, self.settings.equipment.below)
-				self:PostLootMessage(item, self.settings.equipment.below, "Equipment")
+	-- Catalysts (Technologist == Augmentor)
+	--  Architect         Technologist      Cook
+	if (itype == 320) or (itype == 321) or (itype == 322) then
+		local tTradeskills = CraftingLib.GetKnownTradeskills()
+		local bCouldUse = false
+		for _, tVal in pairs(tTradeskills) do
+			if (((tVal.eId == CraftingLib.CodeEnumTradeskill.Architect) and (itype == 320)) or
+			    ((tVal.eId == CraftingLib.CodeEnumTradeskill.Augmentor) and (itype == 321)) or 
+			    ((tVal.eId == CraftingLib.CodeEnumTradeskill.Cooking)   and (itype == 322))) then
+				bCouldUse = true
 			end
-			return
 		end
+		if bCouldUse then
+			if quality <= self.settings.catalysts.my.quality then
+				self:DoLootAction(lootid, self.settings.catalysts.my.below)
+				self:PostLootMessage(item, self.settings.catalysts.my.below, "useful catalysts below selected quality")
+			else
+				self:DoLootAction(lootid, self.settings.catalysts.my.above)
+				self:PostLootMessage(item, self.settings.catalysts.my.above, "useful catalysts above selected quality")
+			end		
+		else
+			if quality <= self.settings.catalysts.other.quality then
+				self:DoLootAction(lootid, self.settings.catalysts.other.below)
+				self:PostLootMessage(item, self.settings.catalysts.other.below, "other catalysts below selected quality")
+			else
+				self:DoLootAction(lootid, self.settings.catalysts.other.above)
+				self:PostLootMessage(item, self.settings.catalysts.other.above, "other catalysts above selected quality")
+			end				
+		end
+		return
+	end
+		
+	-- Equipment
+	--  Armor            Weapon           Gear
+	if (family == 1) or (family == 2) or (family == 15) then
+		if not GameLib.IsNeedRollAllowed(lootid) then
+			self:DoLootAction(lootid, self.settings.equipment.noneed)
+			self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not needable")
+		else
+			if item:IsEquippable() then
+				if quality <= self.settings.equipment.quality then
+					self:DoLootAction(lootid, self.settings.equipment.below)
+					self:PostLootMessage(item, self.settings.equipment.below, "Equipment")
+				end
+			else
+				-- does this ever fire?
+				self:DoLootAction(lootid, self.settings.equipment.noneed)
+				self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not wearable")
+			end
+		end
+		return
 	end
 	
 	
 	-- Not categorized now: analyze it
-	-- self:analyze(item)
+	self:analyze(item)
 end
 
 

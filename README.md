@@ -9,7 +9,7 @@ Automatically select »need« or »greed« based on you settings.
 ![Configuration Window Equipment 1](http://fs2.directupload.net/images/150131/nwj8welc.jpg)
 ![Configuration Window Equipment 2](http://fs2.directupload.net/images/150131/48pk8j3m.jpg)
 ![Configuration Window Style](http://fs1.directupload.net/images/150131/zvun2wqo.jpg)
-![Configuration Window Crafting](http://fs1.directupload.net/images/150131/67eyjowi.jpg)
+![Configuration Window Crafting](http://fs2.directupload.net/images/150131/wnpmqkxm.jpg)
 
 When there's group loot in dungeons you can now let this addon automatically select »need« or »greed«.
 
