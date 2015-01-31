@@ -426,14 +426,14 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	-- Proprietary Material
 	if (category == 128) then
 		self:DoLootAction(lootid, self.settings.prop.all)
-		self:PostLootMessage(item, self.settings.runes.all, "Proprietary Material")
+		self:PostLootMessage(item, self.settings.prop.all, "Proprietary Material")
 		return
 	end
 	
 	-- Bags
 	if (itype == 134) then
 		self:DoLootAction(lootid, self.settings.bags.all)
-		self:PostLootMessage(item, self.settings.runes.all, "Bags")
+		self:PostLootMessage(item, self.settings.bags.all, "Bags")
 		return
 	end
 	
