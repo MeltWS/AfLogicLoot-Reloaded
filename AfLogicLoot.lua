@@ -447,7 +447,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	
 	
 	-- Not categorized now: analyze it
-	self:analyze(item)
+	-- self:analyze(item)
 end
 
 
