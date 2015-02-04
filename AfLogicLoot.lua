@@ -56,6 +56,7 @@ function AfLogicLoot:new(o)
     -- default settings
 	o.settings = {
 		log = true,
+		active = true,
 		decor = {
 			quality = ItemQuality.inferior,
 			below = LootAction.none,
@@ -185,6 +186,12 @@ function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 	local item = Item.GetDataFromId(strParam)
 	if item ~= nil then
 		self:analyze(item)
+	elseif strParam == "on" then
+		self:SetStatus(true)
+	elseif strParam == "off" then
+		self:SetStatus(false)
+	elseif strParam == "toggle" then
+		self:SetStatus(not self.settings.active)
 	else
 		self.wndMain:Invoke()
 		self:SettingsToGUI()
@@ -224,6 +231,10 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):SetRadioSel("dye_all", self.settings.dye.all)
 	self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):SetRadioSel("flux_all", self.settings.flux.all)
 	self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):SetRadioSel("prop_all", self.settings.prop.all)
+	local wndToggleButton1 = self.wndMain:FindChild("btnToggleButton1")
+	local wndToggleButton2 = self.wndMain:FindChild("btnToggleButton2")	
+	wndToggleButton1:Show(self.settings.active)
+	wndToggleButton2:Show(self.settings.active == false)
 end
 
 
@@ -273,6 +284,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			-- replacing single values to not overwrite new default values by not existing values
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
 			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
+			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
 			if tSavedData.settings.decor ~= nil then
 				if tSavedData.settings.decor.quality ~= nil then self.settings.decor.quality = tSavedData.settings.decor.quality end
 				if tSavedData.settings.decor.below ~= nil then self.settings.decor.below = tSavedData.settings.decor.below end
@@ -334,6 +346,7 @@ end
 
 
 function AfLogicLoot:OnLootRollUpdate()
+	if not self.settings.action then return end
 	for _, LootListEntry in pairs(GameLib.GetLootRolls()) do
 		self:CheckForAutoAction(LootListEntry)
 	end
@@ -567,6 +580,20 @@ function AfLogicLoot:log(strMeldung)
 end
 
 
+function AfLogicLoot:SetStatus(bActive)
+	local wndToggleButton1 = self.wndMain:FindChild("btnToggleButton1")
+	local wndToggleButton2 = self.wndMain:FindChild("btnToggleButton2")
+	self.settings.active = bActive
+	wndToggleButton1:Show(bActive)
+	wndToggleButton2:Show(bActive == false)
+	if bActive then
+		self:log("activated")
+	else
+		self:log("deactivated")
+	end
+end
+
+
 -----------------------------------------------------------------------------------------------
 -- AfLogicLootForm Functions
 -----------------------------------------------------------------------------------------------
@@ -593,6 +620,11 @@ function AfLogicLoot:SwitchToTab(iTab)
 	self.wndMain:FindChild("Tab_Equipment2"):Show(iTab == 2)
 	self.wndMain:FindChild("Tab_Style"):Show(iTab == 3)
 	self.wndMain:FindChild("Tab_Crafting"):Show(iTab == 4)
+end
+
+
+function AfLogicLoot:ToggleStatus(wndHandler, wndControl, eMouseButton)
+	self:SetStatus(not self.settings.active)
 end
 
 -----------------------------------------------------------------------------------------------
