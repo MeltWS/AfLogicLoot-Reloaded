@@ -346,7 +346,7 @@ end
 
 
 function AfLogicLoot:OnLootRollUpdate()
-	if not self.settings.action then return end
+	if not self.settings.active then return end
 	for _, LootListEntry in pairs(GameLib.GetLootRolls()) do
 		self:CheckForAutoAction(LootListEntry)
 	end
