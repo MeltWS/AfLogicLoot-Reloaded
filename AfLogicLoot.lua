@@ -62,6 +62,11 @@ function AfLogicLoot:new(o)
 			below = LootAction.none,
 			above = LootAction.none,
 		},
+		fabkits = {
+			quality = ItemQuality.inferior,
+			below = LootAction.none,
+			above = LootAction.none,
+		},
 		fragments = {
 			all = LootAction.none,
 		},
@@ -210,6 +215,9 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.settings.decor.quality)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.settings.decor.below)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):SetRadioSel("decor_above", self.settings.decor.above)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):SetRadioSel("fabkits_quality", self.settings.fabkits.quality)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):SetRadioSel("fabkits_below", self.settings.fabkits.below)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):SetRadioSel("fabkits_above", self.settings.fabkits.above)	
 	self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):SetRadioSel("fragments_all", self.settings.fragments.all)
 	self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):SetRadioSel("survivalist_all", self.settings.survivalist.all)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):SetRadioSel("equipment_quality", self.settings.equipment.quality)
@@ -243,6 +251,9 @@ function AfLogicLoot:GUIToSettings()
 	self.settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
 	self.settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
 	self.settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
+	self.settings.fabkits.quality = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):GetRadioSel("fabkits_quality")
+	self.settings.fabkits.below = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):GetRadioSel("fabkits_below")
+	self.settings.fabkits.above = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):GetRadioSel("fabkits_above")
 	self.settings.fragments.all = self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):GetRadioSel("fragments_all")
 	self.settings.survivalist.all = self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):GetRadioSel("survivalist_all")
 	self.settings.equipment.quality = self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):GetRadioSel("equipment_quality")
@@ -285,6 +296,11 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
 			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
 			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
+			if tSavedData.settings.fabkits ~= nil then
+				if tSavedData.settings.fabkits.quality ~= nil then self.settings.fabkits.quality = tSavedData.settings.fabkits.quality end
+				if tSavedData.settings.fabkits.below ~= nil then self.settings.fabkits.below = tSavedData.settings.fabkits.below end
+				if tSavedData.settings.fabkits.above ~= nil then self.settings.fabkits.above = tSavedData.settings.fabkits.above end
+			end
 			if tSavedData.settings.decor ~= nil then
 				if tSavedData.settings.decor.quality ~= nil then self.settings.decor.quality = tSavedData.settings.decor.quality end
 				if tSavedData.settings.decor.below ~= nil then self.settings.decor.below = tSavedData.settings.decor.below end
@@ -387,7 +403,19 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		end
 		return
 	end
-	
+
+	-- Fabkits
+	if (itype == 164) then
+		if quality <= self.settings.fabkits.quality then
+			self:DoLootAction(lootid, self.settings.fabkits.below)
+			self:PostLootMessage(item, self.settings.fabkits.below, "FABkits of and below selected quality")
+		else
+			self:DoLootAction(lootid, self.settings.fabkits.above)
+			self:PostLootMessage(item, self.settings.fabkits.above, "FABkits above selected quality")
+		end
+		return
+	end	
+		
 	-- Fragments
 	if (itype == 359) then
 		self:DoLootAction(lootid, self.settings.fragments.all)
