@@ -43,6 +43,34 @@ local toItemQuality = {
 	[Item.CodeEnumItemQuality.Artifact] = 7,
 }
 
+local tProfileSelect = {
+	ini = {
+		group = {
+			[0] = 1,
+			[1] = 2,
+			[2] = 3,
+			[3] = 4,
+			[4] = 5,
+		},
+		raid = 6,
+	},
+	world = {
+		group = 7,
+		raid = 8,
+	}
+}
+
+local tProfileSelectToString = {
+	[1] = "group in instance, no randoms",
+	[2] = "group in instance, one random",
+	[3] = "group in instance, two randoms",
+	[4] = "group in instance, three randoms",
+	[5] = "group in instance, four randoms",
+	[6] = "raid in instance",
+	[7] = "group in open world",
+	[8] = "raid in open world",
+}
+
 
 -----------------------------------------------------------------------------------------------
 -- Initialization
@@ -53,10 +81,37 @@ function AfLogicLoot:new(o)
     setmetatable(o, self)
     self.__index = self 
 
-    -- default settings
+    -- default settings for new installation, will be overwritten otherwise
 	o.settings = {
 		log = true,
 		active = true,
+		profiles = 1,
+		lastprofile = 1,
+		activeprofile = 1,
+		automaticprofiles = true,
+		profileselector = {
+			[tProfileSelect.ini.group[0]] = 2,
+			[tProfileSelect.ini.group[1]] = 2,
+			[tProfileSelect.ini.group[2]] = 2,
+			[tProfileSelect.ini.group[3]] = 2,
+			[tProfileSelect.ini.group[4]] = 2,
+			[tProfileSelect.ini.raid] = 2,
+			[tProfileSelect.world.group] = 2,
+			[tProfileSelect.world.raid] = 2,
+		},
+		profileselectorprofile = {
+			[tProfileSelect.ini.group[0]] = 1,
+			[tProfileSelect.ini.group[1]] = 1,
+			[tProfileSelect.ini.group[2]] = 1,
+			[tProfileSelect.ini.group[3]] = 1,
+			[tProfileSelect.ini.group[4]] = 1,
+			[tProfileSelect.ini.raid] = 1,
+			[tProfileSelect.world.group] = 1,
+			[tProfileSelect.world.raid] = 1,
+		},		
+	}
+	
+	o.defaultprofile = {
 		decor = {
 			quality = ItemQuality.inferior,
 			below = LootAction.none,
@@ -117,7 +172,16 @@ function AfLogicLoot:new(o)
 			all = LootAction.none,
 		},
 	}
-
+	
+	o.profiles = {
+		[1] = {
+			name = "default profile",
+			settings = self:CopyTable(o.defaultprofile)
+		}
+	}
+	
+	o.scene = 0
+	
     return o
 end
 
@@ -169,6 +233,15 @@ function AfLogicLoot:OnDocLoaded()
 		self.timer = ApolloTimer.Create(15.0, false, "OnTimer", self)
 
 		Apollo.RegisterEventHandler("LootRollUpdate", "OnLootRollUpdate", self)
+
+		Apollo.RegisterEventHandler("Group_Add",        "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Left",       "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Update",     "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Join",       "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Remove",     "ChoseProfile",        self)
+				
+		Apollo.RegisterEventHandler("ChangeWorld",      "ChoseProfile",        self)
+		
 		self.crbAddon = Apollo.GetAddon("NeedVsGreed")
 		
 		self.wndMain:FindChild("lbl_version"):SetText(strVersion)
@@ -179,6 +252,18 @@ function AfLogicLoot:OnDocLoaded()
 		end
 		self.wndMain:FindChild("btn_equipment1"):SetCheck(true)
 		self:SwitchToTab(1)
+		
+		local i
+		for i = 1, 8, 1 do
+			self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("btn_set_profile"..i):SetData(i)
+		end
+		
+		local uMe = GameLib.GetPlayerUnit()
+		if uMe then
+			self.guild = uMe:GetGuildName()
+		end
+		
+		self:ChoseProfile()
 	end
 end
 
@@ -210,71 +295,195 @@ function AfLogicLoot:OnConfigure()
 end
 
 
+
+function AfLogicLoot:ChoseProfile()
+	if not self.settings.automaticprofiles then return end
+	if not GroupLib.InGroup() then return end
+	local result = 0
+	if GroupLib.InInstance() then
+		if GroupLib.InRaid() then
+			result = tProfileSelect.ini.raid
+		else
+			if self.guild == nil then 
+				result = tProfileSelect.ini.group[4]
+			else
+				-- calculate number of randoms
+				local iRandoms = 0
+				local nMembers = GroupLib.GetMemberCount()
+			
+				for idx = 1, nMembers, 1 do
+				    local uGroupMember = GroupLib:GetUnitForGroupMember(idx)
+			  		local strGuildName = uGroupMember:GetGuildName()
+					if strGuildName ~= nil then
+						if strGuildName ~= self.guild then
+							iRandoms = iRandoms + 1
+						end
+					else
+						iRandoms = iRandoms + 1
+					end
+					result = tProfileSelect.ini.group[iRandoms]
+				end
+			end
+		end
+	else
+		if GroupLib.InRaid() then
+			result = tProfileSelect.world.raid
+		else
+			result = tProfileSelect.world.group
+		end
+	end
+	if self.scene ~= result then
+		local bChanged = false
+		self.scene = result
+		self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		
+		if self.settings.profileselector[result] == 1 then
+			if self.settings.active then
+				self:SetStatus(false)
+				bChanged = true
+			end
+		else
+			if not self.settings.active then
+				self:SetStatus(true)
+				bChanged = true
+			end
+		end
+		
+		if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
+			self:log("switching to profile: "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			self.settings.activeprofile = self.settings.profileselectorprofile[result]
+			self:LoadProfiles()
+			bChanged = true
+		end
+		
+		if bChanged then
+			-- even if the scene switched, the resulting profile may be the same
+			-- this fires only, if the profile or the online status changed
+			Sound.PlayFile("./sounds/chatnotify.wav")
+		end
+	end
+end
+
+
 function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("chk_log"):SetCheck(self.settings.log)
-	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.settings.decor.quality)
-	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.settings.decor.below)
-	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):SetRadioSel("decor_above", self.settings.decor.above)
-	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):SetRadioSel("fabkits_quality", self.settings.fabkits.quality)
-	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):SetRadioSel("fabkits_below", self.settings.fabkits.below)
-	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):SetRadioSel("fabkits_above", self.settings.fabkits.above)	
-	self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):SetRadioSel("fragments_all", self.settings.fragments.all)
-	self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):SetRadioSel("survivalist_all", self.settings.survivalist.all)
-	self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):SetRadioSel("equipment_quality", self.settings.equipment.quality)
-	self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):SetRadioSel("equipment_below", self.settings.equipment.below - 1)
-	self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):SetRadioSel("equipment_noneed", self.settings.equipment.noneed - 1)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):SetRadioSel("sigil_quality", self.settings.sigils.quality)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):SetRadioSel("sigil_below", self.settings.sigils.below)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):SetRadioSel("sigil_above", self.settings.sigils.above)
-	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_my", self.settings.catalysts.my.quality)
-	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):SetRadioSel("catalyst_my_below", self.settings.catalysts.my.below)
-	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):SetRadioSel("catalyst_my_above", self.settings.catalysts.my.above)
-	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_other", self.settings.catalysts.other.quality)
-	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):SetRadioSel("catalyst_other_below", self.settings.catalysts.other.below)
-	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):SetRadioSel("catalyst_other_above", self.settings.catalysts.other.above)
-	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.settings.bags.all)
-	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.settings.amps.all)
-	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.settings.schematics.all)
-	self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):SetRadioSel("cloth_all", self.settings.cloth.all)
-	self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):SetRadioSel("dye_all", self.settings.dye.all)
-	self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):SetRadioSel("flux_all", self.settings.flux.all)
-	self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):SetRadioSel("prop_all", self.settings.prop.all)
+	
+	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.profiles[self.settings.activeprofile].settings.decor.quality)
+	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.profiles[self.settings.activeprofile].settings.decor.below)
+	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):SetRadioSel("decor_above", self.profiles[self.settings.activeprofile].settings.decor.above)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):SetRadioSel("fabkits_quality", self.profiles[self.settings.activeprofile].settings.fabkits.quality)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):SetRadioSel("fabkits_below", self.profiles[self.settings.activeprofile].settings.fabkits.below)
+	self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):SetRadioSel("fabkits_above", self.profiles[self.settings.activeprofile].settings.fabkits.above)	
+	self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):SetRadioSel("fragments_all", self.profiles[self.settings.activeprofile].settings.fragments.all)
+	self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):SetRadioSel("survivalist_all", self.profiles[self.settings.activeprofile].settings.survivalist.all)
+	self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):SetRadioSel("equipment_quality", self.profiles[self.settings.activeprofile].settings.equipment.quality)
+	self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):SetRadioSel("equipment_below", self.profiles[self.settings.activeprofile].settings.equipment.below - 1)
+	self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):SetRadioSel("equipment_noneed", self.profiles[self.settings.activeprofile].settings.equipment.noneed - 1)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):SetRadioSel("sigil_quality", self.profiles[self.settings.activeprofile].settings.sigils.quality)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):SetRadioSel("sigil_below", self.profiles[self.settings.activeprofile].settings.sigils.below)
+	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):SetRadioSel("sigil_above", self.profiles[self.settings.activeprofile].settings.sigils.above)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_my", self.profiles[self.settings.activeprofile].settings.catalysts.my.quality)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):SetRadioSel("catalyst_my_below", self.profiles[self.settings.activeprofile].settings.catalysts.my.below)
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):SetRadioSel("catalyst_my_above", self.profiles[self.settings.activeprofile].settings.catalysts.my.above)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_other", self.profiles[self.settings.activeprofile].settings.catalysts.other.quality)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):SetRadioSel("catalyst_other_below", self.profiles[self.settings.activeprofile].settings.catalysts.other.below)
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):SetRadioSel("catalyst_other_above", self.profiles[self.settings.activeprofile].settings.catalysts.other.above)
+	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.profiles[self.settings.activeprofile].settings.bags.all)
+	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.profiles[self.settings.activeprofile].settings.amps.all)
+	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.profiles[self.settings.activeprofile].settings.schematics.all)
+	self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):SetRadioSel("cloth_all", self.profiles[self.settings.activeprofile].settings.cloth.all)
+	self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):SetRadioSel("dye_all", self.profiles[self.settings.activeprofile].settings.dye.all)
+	self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):SetRadioSel("flux_all", self.profiles[self.settings.activeprofile].settings.flux.all)
+	self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):SetRadioSel("prop_all", self.profiles[self.settings.activeprofile].settings.prop.all)
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetCheck(self.settings.automaticprofiles)
 	local wndToggleButton1 = self.wndMain:FindChild("btnToggleButton1")
 	local wndToggleButton2 = self.wndMain:FindChild("btnToggleButton2")	
 	wndToggleButton1:Show(self.settings.active)
 	wndToggleButton2:Show(self.settings.active == false)
+
+	self:RefreshProfileSelectorDisplay()
+	self:LoadProfiles()
 end
 
 
 function AfLogicLoot:GUIToSettings()
 	self.settings.log = self.wndMain:FindChild("chk_log"):IsChecked()
-	self.settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
-	self.settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
-	self.settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
-	self.settings.fabkits.quality = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):GetRadioSel("fabkits_quality")
-	self.settings.fabkits.below = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):GetRadioSel("fabkits_below")
-	self.settings.fabkits.above = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):GetRadioSel("fabkits_above")
-	self.settings.fragments.all = self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):GetRadioSel("fragments_all")
-	self.settings.survivalist.all = self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):GetRadioSel("survivalist_all")
-	self.settings.equipment.quality = self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):GetRadioSel("equipment_quality")
-	self.settings.equipment.below = self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):GetRadioSel("equipment_below") + 1
-	self.settings.equipment.noneed = self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):GetRadioSel("equipment_noneed") + 1
-	self.settings.sigils.quality = self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):GetRadioSel("sigil_quality")
-	self.settings.sigils.below = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):GetRadioSel("sigil_below")
-	self.settings.sigils.above = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):GetRadioSel("sigil_above")	
-	self.settings.catalysts.my.quality = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_my")
-	self.settings.catalysts.my.below = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):GetRadioSel("catalyst_my_below")
-	self.settings.catalysts.my.above = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):GetRadioSel("catalyst_my_above")
-	self.settings.catalysts.other.quality = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_other")
-	self.settings.catalysts.other.below = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):GetRadioSel("catalyst_other_below")
-	self.settings.catalysts.other.above = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):GetRadioSel("catalyst_other_above")
-	self.settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
-	self.settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
-	self.settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
-	self.settings.cloth.all = self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):GetRadioSel("cloth_all")
-	self.settings.dye.all = self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):GetRadioSel("dye_all")
-	self.settings.flux.all = self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):GetRadioSel("flux_all")
-	self.settings.prop.all = self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):GetRadioSel("prop_all")
+	self.profiles[self.settings.activeprofile].settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
+	self.profiles[self.settings.activeprofile].settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
+	self.profiles[self.settings.activeprofile].settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
+	self.profiles[self.settings.activeprofile].settings.fabkits.quality = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_quality"):GetRadioSel("fabkits_quality")
+	self.profiles[self.settings.activeprofile].settings.fabkits.below = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_below"):GetRadioSel("fabkits_below")
+	self.profiles[self.settings.activeprofile].settings.fabkits.above = self.wndMain:FindChild("frm_fabkits"):FindChild("frm_action_above"):GetRadioSel("fabkits_above")
+	self.profiles[self.settings.activeprofile].settings.fragments.all = self.wndMain:FindChild("frm_fragments"):FindChild("frm_action"):GetRadioSel("fragments_all")
+	self.profiles[self.settings.activeprofile].settings.survivalist.all = self.wndMain:FindChild("frm_survivalist"):FindChild("frm_action"):GetRadioSel("survivalist_all")
+	self.profiles[self.settings.activeprofile].settings.equipment.quality = self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):GetRadioSel("equipment_quality")
+	self.profiles[self.settings.activeprofile].settings.equipment.below = self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):GetRadioSel("equipment_below") + 1
+	self.profiles[self.settings.activeprofile].settings.equipment.noneed = self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):GetRadioSel("equipment_noneed") + 1
+	self.profiles[self.settings.activeprofile].settings.sigils.quality = self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):GetRadioSel("sigil_quality")
+	self.profiles[self.settings.activeprofile].settings.sigils.below = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):GetRadioSel("sigil_below")
+	self.profiles[self.settings.activeprofile].settings.sigils.above = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):GetRadioSel("sigil_above")	
+	self.profiles[self.settings.activeprofile].settings.catalysts.my.quality = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_my")
+	self.profiles[self.settings.activeprofile].settings.catalysts.my.below = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):GetRadioSel("catalyst_my_below")
+	self.profiles[self.settings.activeprofile].settings.catalysts.my.above = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):GetRadioSel("catalyst_my_above")
+	self.profiles[self.settings.activeprofile].settings.catalysts.other.quality = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_other")
+	self.profiles[self.settings.activeprofile].settings.catalysts.other.below = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):GetRadioSel("catalyst_other_below")
+	self.profiles[self.settings.activeprofile].settings.catalysts.other.above = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):GetRadioSel("catalyst_other_above")
+	self.profiles[self.settings.activeprofile].settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
+	self.profiles[self.settings.activeprofile].settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
+	self.profiles[self.settings.activeprofile].settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
+	self.profiles[self.settings.activeprofile].settings.cloth.all = self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):GetRadioSel("cloth_all")
+	self.profiles[self.settings.activeprofile].settings.dye.all = self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):GetRadioSel("dye_all")
+	self.profiles[self.settings.activeprofile].settings.flux.all = self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):GetRadioSel("flux_all")
+	self.profiles[self.settings.activeprofile].settings.prop.all = self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):GetRadioSel("prop_all")
+	self.settings.profileselector[tProfileSelect.ini.group[0]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group0")
+	self.settings.profileselector[tProfileSelect.ini.group[1]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group1")
+	self.settings.profileselector[tProfileSelect.ini.group[2]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group2")
+	self.settings.profileselector[tProfileSelect.ini.group[3]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group3")
+	self.settings.profileselector[tProfileSelect.ini.group[4]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group4")
+	self.settings.profileselector[tProfileSelect.ini.raid] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("raid_ini")
+	self.settings.profileselector[tProfileSelect.world.group] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group_world")
+	self.settings.profileselector[tProfileSelect.world.raid] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("raid_world")	
+	self.settings.automaticprofiles = self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):IsChecked()
+end
+
+	
+
+	
+function AfLogicLoot:RefreshProfileSelectorDisplay()
+	local i
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group0", self.settings.profileselector[tProfileSelect.ini.group[0]])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group1", self.settings.profileselector[tProfileSelect.ini.group[1]])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group2", self.settings.profileselector[tProfileSelect.ini.group[2]])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group3", self.settings.profileselector[tProfileSelect.ini.group[3]])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group4", self.settings.profileselector[tProfileSelect.ini.group[4]])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("raid_ini", self.settings.profileselector[tProfileSelect.ini.raid])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("group_world", self.settings.profileselector[tProfileSelect.world.group])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):SetRadioSel("raid_world", self.settings.profileselector[tProfileSelect.world.raid])
+	for i = 1, 8, 1 do
+		self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_selector"..i):SetText(self.profiles[self.settings.profileselectorprofile[i]].name)
+	end
+end
+
+
+function AfLogicLoot:CheckProfileSelector()
+	local i
+	for i = 1, 8, 1 do
+		if (self.settings.profileselectorprofile[i] == nil) or (self.profiles[self.settings.profileselectorprofile[i]] == nil) then
+			self.settings.profileselector[i] = 1
+			self.settings.profileselectorprofile[i] = self.settings.activeprofile
+		end
+	end
+end
+
+
+function AfLogicLoot:CopyTable(obj, seen)
+	if type(obj) ~= 'table' then return obj end
+	if seen and seen[obj] then return seen[obj] end
+	local s = seen or {}
+	local res = setmetatable({}, getmetatable(obj))
+	s[obj] = res
+	for k, v in pairs(obj) do res[self:CopyTable(k, s)] = self:CopyTable(v, s) end
+	return res
 end
 
 
@@ -283,6 +492,7 @@ function AfLogicLoot:OnSave(eType)
 	if eType == GameLib.CodeEnumAddonSaveLevel.Account then
 		local tSavedData = {}
 		tSavedData.settings = self.settings
+		tSavedData.profiles = self.profiles
 		return tSavedData		
 	end
 	return
@@ -291,72 +501,208 @@ end
 
 function AfLogicLoot:OnRestore(eType, tSavedData)
 	if eType == GameLib.CodeEnumAddonSaveLevel.Account then
+	
 		if tSavedData.settings ~= nil then
 			-- replacing single values to not overwrite new default values by not existing values
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
 			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
+			if tSavedData.settings.automaticprofiles ~= nil then self.settings.automaticprofiles = tSavedData.settings.automaticprofiles end
 			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
-			if tSavedData.settings.fabkits ~= nil then
-				if tSavedData.settings.fabkits.quality ~= nil then self.settings.fabkits.quality = tSavedData.settings.fabkits.quality end
-				if tSavedData.settings.fabkits.below ~= nil then self.settings.fabkits.below = tSavedData.settings.fabkits.below end
-				if tSavedData.settings.fabkits.above ~= nil then self.settings.fabkits.above = tSavedData.settings.fabkits.above end
+			if tSavedData.settings.activeprofile ~= nil then 
+				self.settings.activeprofile = tSavedData.settings.activeprofile
+			else
+				self.settings.activeprofile = 1
 			end
-			if tSavedData.settings.decor ~= nil then
-				if tSavedData.settings.decor.quality ~= nil then self.settings.decor.quality = tSavedData.settings.decor.quality end
-				if tSavedData.settings.decor.below ~= nil then self.settings.decor.below = tSavedData.settings.decor.below end
-				if tSavedData.settings.decor.above ~= nil then self.settings.decor.above = tSavedData.settings.decor.above end
+			if tSavedData.settings.profileselector ~= nil then
+				if tSavedData.settings.profileselector[tProfileSelect.ini.group[0]] ~= nil then self.settings.profileselector[tProfileSelect.ini.group[0]] = tSavedData.settings.profileselector[tProfileSelect.ini.group[0]] end
+				if tSavedData.settings.profileselector[tProfileSelect.ini.group[1]] ~= nil then self.settings.profileselector[tProfileSelect.ini.group[1]] = tSavedData.settings.profileselector[tProfileSelect.ini.group[1]] end
+				if tSavedData.settings.profileselector[tProfileSelect.ini.group[2]] ~= nil then self.settings.profileselector[tProfileSelect.ini.group[2]] = tSavedData.settings.profileselector[tProfileSelect.ini.group[2]] end
+				if tSavedData.settings.profileselector[tProfileSelect.ini.group[3]] ~= nil then self.settings.profileselector[tProfileSelect.ini.group[3]] = tSavedData.settings.profileselector[tProfileSelect.ini.group[3]] end
+				if tSavedData.settings.profileselector[tProfileSelect.ini.group[4]] ~= nil then self.settings.profileselector[tProfileSelect.ini.group[4]] = tSavedData.settings.profileselector[tProfileSelect.ini.group[4]] end
+				if tSavedData.settings.profileselector[tProfileSelect.ini.raid]     ~= nil then self.settings.profileselector[tProfileSelect.ini.raid]     = tSavedData.settings.profileselector[tProfileSelect.ini.raid]     end
+				if tSavedData.settings.profileselector[tProfileSelect.world.group]  ~= nil then self.settings.profileselector[tProfileSelect.world.group]  = tSavedData.settings.profileselector[tProfileSelect.world.group]  end
+				if tSavedData.settings.profileselector[tProfileSelect.world.raid]   ~= nil then self.settings.profileselector[tProfileSelect.world.raid]   = tSavedData.settings.profileselector[tProfileSelect.world.raid]   end
 			end
-			if tSavedData.settings.fragments ~= nil then
-				if tSavedData.settings.fragments.all ~= nil then self.settings.fragments.all = tSavedData.settings.fragments.all end
-			end
-			if tSavedData.settings.survivalist ~= nil then
-				if tSavedData.settings.survivalist.all ~= nil then self.settings.survivalist.all = tSavedData.settings.survivalist.all end
-			end
-			if tSavedData.settings.equipment ~= nil then
-				if tSavedData.settings.equipment.quality ~= nil then self.settings.equipment.quality = tSavedData.settings.equipment.quality end
-				if tSavedData.settings.equipment.below ~= nil then self.settings.equipment.below = tSavedData.settings.equipment.below end
-				if tSavedData.settings.equipment.noneed ~= nil then self.settings.equipment.noneed = tSavedData.settings.equipment.noneed end
-			end
-			if tSavedData.settings.sigils ~= nil then
-				if tSavedData.settings.sigils.quality ~= nil then self.settings.sigils.quality = tSavedData.settings.sigils.quality end
-				if tSavedData.settings.sigils.below ~= nil then self.settings.sigils.below = tSavedData.settings.sigils.below end
-				if tSavedData.settings.sigils.above ~= nil then self.settings.sigils.above = tSavedData.settings.sigils.above end
-			end			
-			if tSavedData.settings.catalysts ~= nil then
-				if tSavedData.settings.catalysts.my ~= nil then
-					if tSavedData.settings.catalysts.my.quality ~= nil then self.settings.catalysts.my.quality = tSavedData.settings.catalysts.my.quality end
-					if tSavedData.settings.catalysts.my.below ~= nil then self.settings.catalysts.my.below = tSavedData.settings.catalysts.my.below end
-					if tSavedData.settings.catalysts.my.above ~= nil then self.settings.catalysts.my.above = tSavedData.settings.catalysts.my.above end
-				end						
-				if tSavedData.settings.catalysts.other ~= nil then
-					if tSavedData.settings.catalysts.other.quality ~= nil then self.settings.catalysts.other.quality = tSavedData.settings.catalysts.other.quality end
-					if tSavedData.settings.catalysts.other.below ~= nil then self.settings.catalysts.other.below = tSavedData.settings.catalysts.other.below end
-					if tSavedData.settings.catalysts.other.above ~= nil then self.settings.catalysts.other.above = tSavedData.settings.catalysts.other.above end
-				end						
-			end
-			if tSavedData.settings.bags ~= nil then
-				if tSavedData.settings.bags.all ~= nil then self.settings.bags.all = tSavedData.settings.bags.all end
-			end
-			if tSavedData.settings.amps ~= nil then
-				if tSavedData.settings.amps.all ~= nil then self.settings.amps.all = tSavedData.settings.amps.all end
-			end
-			if tSavedData.settings.schematics ~= nil then
-				if tSavedData.settings.schematics.all ~= nil then self.settings.schematics.all = tSavedData.settings.schematics.all end
-			end
-			if tSavedData.settings.cloth ~= nil then
-				if tSavedData.settings.cloth.all ~= nil then self.settings.cloth.all = tSavedData.settings.cloth.all end
-			end
-			if tSavedData.settings.dye ~= nil then
-				if tSavedData.settings.dye.all ~= nil then self.settings.dye.all = tSavedData.settings.dye.all end
-			end
-			if tSavedData.settings.flux ~= nil then
-				if tSavedData.settings.flux.all ~= nil then self.settings.flux.all = tSavedData.settings.flux.all end
-			end
-			if tSavedData.settings.prop ~= nil then
-				if tSavedData.settings.prop.all ~= nil then self.settings.prop.all = tSavedData.settings.prop.all end
+
+			if tSavedData.settings.profileselectorprofile ~= nil then
+				self.settings.profileselectorprofile = tSavedData.settings.profileselectorprofile 
+			end						
+			
+		end
+
+		
+		if tSavedData.profiles ~= nil then
+		
+			-- check if profile 1 has been deleted (forced creation at init)
+			if tSavedData.profiles[1] == nil then self.profiles[1] = nil end
+		
+			for idx, profile in pairs(tSavedData.profiles) do
+			
+				-- Restore profiles and replace non existing values with default values
+				self.profiles[idx] = {
+					name = profile.name,
+					settings = {},
+				}
+				self.profiles[idx].settings =  self:CopyTable(self.defaultprofile)
+			
+				if profile.settings ~= nil then
+					-- replacing single values to not overwrite new default values by not existing values
+					if profile.settings.fabkits ~= nil then
+						if profile.settings.fabkits.quality ~= nil then self.profiles[idx].settings.fabkits.quality = profile.settings.fabkits.quality end
+						if profile.settings.fabkits.below ~= nil then self.profiles[idx].settings.fabkits.below = profile.settings.fabkits.below end
+						if profile.settings.fabkits.above ~= nil then self.profiles[idx].settings.fabkits.above = profile.settings.fabkits.above end
+					end
+					if profile.settings.decor ~= nil then
+						if profile.settings.decor.quality ~= nil then self.profiles[idx].settings.decor.quality = profile.settings.decor.quality end
+						if profile.settings.decor.below ~= nil then self.profiles[idx].settings.decor.below = profile.settings.decor.below end
+						if profile.settings.decor.above ~= nil then self.profiles[idx].settings.decor.above = profile.settings.decor.above end
+					end
+					if profile.settings.fragments ~= nil then
+						if profile.settings.fragments.all ~= nil then self.profiles[idx].settings.fragments.all = profile.settings.fragments.all end
+					end
+					if profile.settings.survivalist ~= nil then
+						if profile.settings.survivalist.all ~= nil then self.profiles[idx].settings.survivalist.all = profile.settings.survivalist.all end
+					end
+					if profile.settings.equipment ~= nil then
+					
+						if profile.settings.equipment.quality ~= nil then self.profiles[idx].settings.equipment.quality = profile.settings.equipment.quality end
+						if profile.settings.equipment.below ~= nil then self.profiles[idx].settings.equipment.below = profile.settings.equipment.below end
+						if profile.settings.equipment.noneed ~= nil then self.profiles[idx].settings.equipment.noneed = profile.settings.equipment.noneed end
+					end
+					if profile.settings.sigils ~= nil then
+						if profile.settings.sigils.quality ~= nil then self.profiles[idx].settings.sigils.quality = profile.settings.sigils.quality end
+						if profile.settings.sigils.below ~= nil then self.profiles[idx].settings.sigils.below = profile.settings.sigils.below end
+						if profile.settings.sigils.above ~= nil then self.profiles[idx].settings.sigils.above = profile.settings.sigils.above end
+					end			
+					if profile.settings.catalysts ~= nil then
+						if profile.settings.catalysts.my ~= nil then
+							if profile.settings.catalysts.my.quality ~= nil then self.profiles[idx].settings.catalysts.my.quality = profile.settings.catalysts.my.quality end
+							if profile.settings.catalysts.my.below ~= nil then self.profiles[idx].settings.catalysts.my.below = profile.settings.catalysts.my.below end
+							if profile.settings.catalysts.my.above ~= nil then self.profiles[idx].settings.catalysts.my.above = profile.settings.catalysts.my.above end
+						end						
+						if profile.settings.catalysts.other ~= nil then
+							if profile.settings.catalysts.other.quality ~= nil then self.profiles[idx].settings.catalysts.other.quality = profile.settings.catalysts.other.quality end
+							if profile.settings.catalysts.other.below ~= nil then self.profiles[idx].settings.catalysts.other.below = profile.settings.catalysts.other.below end
+							if profile.settings.catalysts.other.above ~= nil then self.profiles[idx].settings.catalysts.other.above = profile.settings.catalysts.other.above end
+						end						
+					end
+					if profile.settings.bags ~= nil then
+						if profile.settings.bags.all ~= nil then self.profiles[idx].settings.bags.all = profile.settings.bags.all end
+					end
+					if profile.settings.amps ~= nil then
+						if profile.settings.amps.all ~= nil then self.profiles[idx].settings.amps.all = profile.settings.amps.all end
+					end
+					if profile.settings.schematics ~= nil then
+						if profile.settings.schematics.all ~= nil then self.profiles[idx].settings.schematics.all = profile.settings.schematics.all end
+					end
+					if profile.settings.cloth ~= nil then
+						if profile.settings.cloth.all ~= nil then self.profiles[idx].settings.cloth.all = profile.settings.cloth.all end
+					end
+					if profile.settings.dye ~= nil then
+						if profile.settings.dye.all ~= nil then self.profiles[idx].settings.dye.all = profile.settings.dye.all end
+					end
+					if profile.settings.flux ~= nil then
+						if profile.settings.flux.all ~= nil then self.profiles[idx].settings.flux.all = profile.settings.flux.all end
+					end
+					if profile.settings.prop ~= nil then
+						if profile.settings.prop.all ~= nil then self.profiles[idx].settings.prop.all = profile.settings.prop.all end
+					end
+				end
+						
+				self.settings.profiles = self.settings.profiles + 1
+				if idx > self.settings.lastprofile then
+					self.settings.lastprofile = idx
+				end
 			end
 		end
-		self:log(tostring(self.settings.firstconfigureshown))
+		
+		
+		if (tSavedData.settings == nil) or (tSavedData.settings.profiles == nil) then
+			-- no profiles existing: first run or updated from old version
+			-- can only be old version, because OnRestore isn't called at first start, because nothing gets loaded!
+			-- create default profile in both cases
+			self.profiles[1] = {
+				name = "default profile",
+				settings = self:CopyTable(self.defaultprofile),
+			}
+			self.settings.profiles = 1
+			self.settings.activeprofile = 1
+			self.settings.lastprofile = 1
+			
+			local i
+			for i = 1, 8, 1 do
+				self.settings.profileselector[i] = 2
+				self.settings.profileselectorprofile[i] = 1
+			end
+		
+			-- check for existing values from old version and overwrite new profile with these values
+			-- OLD ONES
+			-- no need to expand
+			if tSavedData.settings ~= nil then
+				if tSavedData.settings.fabkits ~= nil then
+					if tSavedData.settings.fabkits.quality ~= nil then self.profiles[1].settings.fabkits.quality = tSavedData.settings.fabkits.quality end
+					if tSavedData.settings.fabkits.below ~= nil then self.profiles[1].settings.fabkits.below = tSavedData.settings.fabkits.below end
+					if tSavedData.settings.fabkits.above ~= nil then self.profiles[1].settings.fabkits.above = tSavedData.settings.fabkits.above end
+				end
+				if tSavedData.settings.decor ~= nil then
+					if tSavedData.settings.decor.quality ~= nil then self.profiles[1].settings.decor.quality = tSavedData.settings.decor.quality end
+					if tSavedData.settings.decor.below ~= nil then self.profiles[1].settings.decor.below = tSavedData.settings.decor.below end
+					if tSavedData.settings.decor.above ~= nil then self.profiles[1].settings.decor.above = tSavedData.settings.decor.above end
+				end
+				if tSavedData.settings.fragments ~= nil then
+					if tSavedData.settings.fragments.all ~= nil then self.profiles[1].settings.fragments.all = tSavedData.settings.fragments.all end
+				end
+				if tSavedData.settings.survivalist ~= nil then
+					if tSavedData.settings.survivalist.all ~= nil then self.profiles[1].settings.survivalist.all = tSavedData.settings.survivalist.all end
+				end
+				if tSavedData.settings.equipment ~= nil then
+					if tSavedData.settings.equipment.quality ~= nil then self.profiles[1].settings.equipment.quality = tSavedData.settings.equipment.quality end
+					if tSavedData.settings.equipment.below ~= nil then self.profiles[1].settings.equipment.below = tSavedData.settings.equipment.below end
+					if tSavedData.settings.equipment.noneed ~= nil then self.profiles[1].settings.equipment.noneed = tSavedData.settings.equipment.noneed end
+				end
+				if tSavedData.settings.sigils ~= nil then
+					if tSavedData.settings.sigils.quality ~= nil then self.profiles[1].settings.sigils.quality = tSavedData.settings.sigils.quality end
+					if tSavedData.settings.sigils.below ~= nil then self.profiles[1].settings.sigils.below = tSavedData.settings.sigils.below end
+					if tSavedData.settings.sigils.above ~= nil then self.profiles[1].settings.sigils.above = tSavedData.settings.sigils.above end
+				end			
+				if tSavedData.settings.catalysts ~= nil then
+					if tSavedData.settings.catalysts.my ~= nil then
+						if tSavedData.settings.catalysts.my.quality ~= nil then self.profiles[1].settings.catalysts.my.quality = tSavedData.settings.catalysts.my.quality end
+						if tSavedData.settings.catalysts.my.below ~= nil then self.profiles[1].settings.catalysts.my.below = tSavedData.settings.catalysts.my.below end
+						if tSavedData.settings.catalysts.my.above ~= nil then self.profiles[1].settings.catalysts.my.above = tSavedData.settings.catalysts.my.above end
+					end						
+					if tSavedData.settings.catalysts.other ~= nil then
+						if tSavedData.settings.catalysts.other.quality ~= nil then self.profiles[1].settings.catalysts.other.quality = tSavedData.settings.catalysts.other.quality end
+						if tSavedData.settings.catalysts.other.below ~= nil then self.profiles[1].settings.catalysts.other.below = tSavedData.settings.catalysts.other.below end
+						if tSavedData.settings.catalysts.other.above ~= nil then self.profiles[1].settings.catalysts.other.above = tSavedData.settings.catalysts.other.above end
+					end						
+				end
+				if tSavedData.settings.bags ~= nil then
+					if tSavedData.settings.bags.all ~= nil then self.profiles[1].settings.bags.all = tSavedData.settings.bags.all end
+				end
+				if tSavedData.settings.amps ~= nil then
+					if tSavedData.settings.amps.all ~= nil then self.profiles[1].settings.amps.all = tSavedData.settings.amps.all end
+				end
+				if tSavedData.settings.schematics ~= nil then
+					if tSavedData.settings.schematics.all ~= nil then self.profiles[1].settings.schematics.all = tSavedData.settings.schematics.all end
+				end
+				if tSavedData.settings.cloth ~= nil then
+					if tSavedData.settings.cloth.all ~= nil then self.profiles[1].settings.cloth.all = tSavedData.settings.cloth.all end
+				end
+				if tSavedData.settings.dye ~= nil then
+					if tSavedData.settings.dye.all ~= nil then self.profiles[1].settings.dye.all = tSavedData.settings.dye.all end
+				end
+				if tSavedData.settings.flux ~= nil then
+					if tSavedData.settings.flux.all ~= nil then self.profiles[1].settings.flux.all = tSavedData.settings.flux.all end
+				end
+				if tSavedData.settings.prop ~= nil then
+					if tSavedData.settings.prop.all ~= nil then self.profiles[1].settings.prop.all = tSavedData.settings.prop.all end
+				end
+			end
+					
+		end
+	
+		self:CheckProfileSelector()
 	end
 end
 
@@ -394,87 +740,87 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	
 	-- Decor
 	if (itype == 155) then
-		if quality <= self.settings.decor.quality then
-			self:DoLootAction(lootid, self.settings.decor.below)
-			self:PostLootMessage(item, self.settings.decor.below, "Decor of and below selected quality")
+		if quality <= self.profiles[self.settings.activeprofile].settings.decor.quality then
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.decor.below)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.below, "Decor of and below selected quality")
 		else
-			self:DoLootAction(lootid, self.settings.decor.above)
-			self:PostLootMessage(item, self.settings.decor.above, "Decor above selected quality")
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.decor.above)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.above, "Decor above selected quality")
 		end
 		return
 	end
 
 	-- Fabkits
 	if (itype == 164) then
-		if quality <= self.settings.fabkits.quality then
-			self:DoLootAction(lootid, self.settings.fabkits.below)
-			self:PostLootMessage(item, self.settings.fabkits.below, "FABkits of and below selected quality")
+		if quality <= self.profiles[self.settings.activeprofile].settings.fabkits.quality then
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fabkits.below)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.below, "FABkits of and below selected quality")
 		else
-			self:DoLootAction(lootid, self.settings.fabkits.above)
-			self:PostLootMessage(item, self.settings.fabkits.above, "FABkits above selected quality")
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fabkits.above)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.above, "FABkits above selected quality")
 		end
 		return
 	end	
 		
 	-- Fragments
 	if (itype == 359) then
-		self:DoLootAction(lootid, self.settings.fragments.all)
-		self:PostLootMessage(item, self.settings.fragments.all, "Fragments")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fragments.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fragments.all, "Fragments")
 		return
 	end
 
 	-- Sigils
 	if (category == 120) then
-		if quality <= self.settings.sigils.quality then
-			self:DoLootAction(lootid, self.settings.sigils.below)
-			self:PostLootMessage(item, self.settings.sigils.below, "Sigils of and below selected quality")
+		if quality <= self.profiles[self.settings.activeprofile].settings.sigils.quality then
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.below)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.below, "Sigils of and below selected quality")
 		else
-			self:DoLootAction(lootid, self.settings.sigils.above)
-			self:PostLootMessage(item, self.settings.sigils.above, "Sigils above selected quality")
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.above)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.above, "Sigils above selected quality")
 		end		
 		return
 	end
 		
 	-- Survivalist
 	if (category == 110) then
-		self:DoLootAction(lootid, self.settings.survivalist.all)
-		self:PostLootMessage(item, self.settings.survivalist.all, "Survivalist")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.survivalist.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.survivalist.all, "Survivalist")
 		return
 	end
 	
 	-- Cloth
 	if (category == 113) then
-		self:DoLootAction(lootid, self.settings.cloth.all)
-		self:PostLootMessage(item, self.settings.cloth.all, "Cloth")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.cloth.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.cloth.all, "Cloth")
 		return
 	end
 	
 	-- Dye
 	--  dye collection    dye
 	if (itype == 349) or (itype == 332) then
-		self:DoLootAction(lootid, self.settings.dye.all)
-		self:PostLootMessage(item, self.settings.dye.all, "Dye")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.dye.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.dye.all, "Dye")
 		return
 	end
 		
 	-- Flux
 	if (itype == 465) then
-		self:DoLootAction(lootid, self.settings.flux.all)
-		self:PostLootMessage(item, self.settings.flux.all, "Runic Flux")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.flux.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.flux.all, "Runic Flux")
 		return
 	end
 	
 	-- Proprietary Material
 	if (category == 128) then
-		self:DoLootAction(lootid, self.settings.prop.all)
-		self:PostLootMessage(item, self.settings.prop.all, "Proprietary Material")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.prop.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.prop.all, "Proprietary Material")
 		return
 	end
 	
 	-- Bags
 	if (itype == 134) then
-		self:DoLootAction(lootid, self.settings.bags.all)
-		self:PostLootMessage(item, self.settings.bags.all, "Bags")
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.bags.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.bags.all, "Bags")
 		return
 	end
 	
@@ -495,11 +841,11 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 			self:PostLootMessage(item, LootAction.need, "AMP and Schematics you don't already own")
 		else
 			if (family == 32) then
-				self:DoLootAction(lootid, self.settings.amps.all)
-				self:PostLootMessage(item, self.settings.amps.all, "AMP")
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.amps.all)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.amps.all, "AMP")
 			else
-				self:DoLootAction(lootid, self.settings.schematics.all)
-				self:PostLootMessage(item, self.settings.schematics.all, "Schematics")
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.schematics.all)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.schematics.all, "Schematics")
 			end
 		end
 		
@@ -519,20 +865,20 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 			end
 		end
 		if bCouldUse then
-			if quality <= self.settings.catalysts.my.quality then
-				self:DoLootAction(lootid, self.settings.catalysts.my.below)
-				self:PostLootMessage(item, self.settings.catalysts.my.below, "useful catalysts below selected quality")
+			if quality <= self.profiles[self.settings.activeprofile].settings.catalysts.my.quality then
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.my.below)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.below, "useful catalysts below selected quality")
 			else
-				self:DoLootAction(lootid, self.settings.catalysts.my.above)
-				self:PostLootMessage(item, self.settings.catalysts.my.above, "useful catalysts above selected quality")
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.my.above)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.above, "useful catalysts above selected quality")
 			end		
 		else
-			if quality <= self.settings.catalysts.other.quality then
-				self:DoLootAction(lootid, self.settings.catalysts.other.below)
-				self:PostLootMessage(item, self.settings.catalysts.other.below, "other catalysts below selected quality")
+			if quality <= self.profiles[self.settings.activeprofile].settings.catalysts.other.quality then
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.other.below)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.below, "other catalysts below selected quality")
 			else
-				self:DoLootAction(lootid, self.settings.catalysts.other.above)
-				self:PostLootMessage(item, self.settings.catalysts.other.above, "other catalysts above selected quality")
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.other.above)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.above, "other catalysts above selected quality")
 			end				
 		end
 		return
@@ -542,18 +888,18 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	--  Armor            Weapon           Gear
 	if (family == 1) or (family == 2) or (family == 15) then
 		if not GameLib.IsNeedRollAllowed(lootid) then
-			self:DoLootAction(lootid, self.settings.equipment.noneed)
-			self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not needable")
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.noneed)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, "Equipment, not needable")
 		else
 			if item:IsEquippable() then
-				if quality <= self.settings.equipment.quality then
-					self:DoLootAction(lootid, self.settings.equipment.below)
-					self:PostLootMessage(item, self.settings.equipment.below, "Equipment")
+				if quality <= self.profiles[self.settings.activeprofile].settings.equipment.quality then
+					self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.below)
+					self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.below, "Equipment")
 				end
 			else
 				-- does this ever fire?
-				self:DoLootAction(lootid, self.settings.equipment.noneed)
-				self:PostLootMessage(item, self.settings.equipment.noneed, "Equipment, not wearable")
+				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.noneed)
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, "Equipment, not wearable")
 			end
 		end
 		return
@@ -622,6 +968,54 @@ function AfLogicLoot:SetStatus(bActive)
 end
 
 
+function AfLogicLoot:AddProfile()
+	local wndInput = self.wndMain:FindChild("txt_profile_name")
+	local strName = wndInput:GetText()
+	if strName:len() == 0 then
+		self:log("please enter a name for that profile")
+		return
+	end
+	
+	self.settings.lastprofile = self.settings.lastprofile + 1
+	self.profiles[self.settings.lastprofile] = {
+		name = strName,
+		settings = self:CopyTable(self.defaultprofile),
+	}
+	self.settings.profiles = self.settings.profiles + 1
+	self.settings.activeprofile = self.settings.lastprofile
+	self:GUIToSettings()
+	self:LoadProfiles()
+	wndInput:SetText("")
+end
+
+
+function AfLogicLoot:LoadProfiles()
+	local wndContainer = self.wndMain:FindChild("frm_profiles")
+	local wndPopupContainer = self.wndMain:FindChild("frm_profiles_dropup")
+	
+	wndContainer:DestroyChildren()
+	wndPopupContainer:DestroyChildren()
+	
+	for idx, tProfile in pairs(self.profiles) do
+		-- Profile deletion
+		local wndEntry = Apollo.LoadForm(self.xmlDoc, "frm_entry_profiles", wndContainer, self)
+		wndEntry:FindChild("lbl_entry_name"):SetText(tProfile.name)
+		wndEntry:FindChild("btn_delete"):SetData(idx)
+		-- Profile selector
+		local wndEntry = Apollo.LoadForm(self.xmlDoc, "frm_entry_single_profile", wndPopupContainer, self)
+		local wndButton = wndEntry:FindChild("btn_entry")
+		wndButton:SetText(tProfile.name)
+		wndButton:SetData(idx)
+	end
+	
+	
+	wndContainer:ArrangeChildrenVert()
+	wndPopupContainer:ArrangeChildrenVert()	
+	
+	self.wndMain:FindChild("frm_combobox_selector"):FindChild("btn_text"):SetText(self.profiles[self.settings.activeprofile].name)
+end
+
+
 -----------------------------------------------------------------------------------------------
 -- AfLogicLootForm Functions
 -----------------------------------------------------------------------------------------------
@@ -648,12 +1042,68 @@ function AfLogicLoot:SwitchToTab(iTab)
 	self.wndMain:FindChild("Tab_Equipment2"):Show(iTab == 2)
 	self.wndMain:FindChild("Tab_Style"):Show(iTab == 3)
 	self.wndMain:FindChild("Tab_Crafting"):Show(iTab == 4)
+	self.wndMain:FindChild("Tab_Profiles"):Show(iTab == 5)
 end
 
 
 function AfLogicLoot:ToggleStatus(wndHandler, wndControl, eMouseButton)
 	self:SetStatus(not self.settings.active)
 end
+
+
+function AfLogicLoot:OnAddProfile(wndHandler, wndControl, eMouseButton)
+	self:AddProfile()
+end
+
+
+function AfLogicLoot:OnProfileCombobox(wndHandler, wndControl, eMouseButton)
+	local wndComboboxPopup = self.wndMain:FindChild("frm_combobox_popup")
+	wndComboboxPopup:Show(wndComboboxPopup:IsShown() == false)
+end
+
+
+function AfLogicLoot:OnAssignProfile(wndHandler, wndControl, eMouseButton)
+	local iProfile = wndControl:GetData()
+	self.settings.profileselectorprofile[iProfile] = self.settings.activeprofile
+	self.settings.profileselector[iProfile] = 2
+	self:RefreshProfileSelectorDisplay()
+end
+
+---------------------------------------------------------------------------------------------------
+-- frm_entry_single_profile Functions
+---------------------------------------------------------------------------------------------------
+
+function AfLogicLoot:OnComboboxEntry(wndHandler, wndControl, eMouseButton)
+	local wndComboboxPopup = self.wndMain:FindChild("frm_combobox_popup")
+	wndComboboxPopup:Show(false)
+	self.settings.activeprofile = wndControl:GetData()
+	self:SettingsToGUI()
+end
+
+
+---------------------------------------------------------------------------------------------------
+-- frm_entry_profiles Functions
+---------------------------------------------------------------------------------------------------
+
+function AfLogicLoot:OnDeleteProfile(wndHandler, wndControl, eMouseButton)
+	-- wndControl:GetParent():Destroy()
+	local iID = wndControl:GetData()
+	if iID == self.settings.activeprofile then
+		self:log("You can not delete the active profile. Activate another profile first.")
+		return
+	end
+	if self.settings.profiles == 1 then
+		-- shouldn't fire and therefore make self.settings.profiles unneccessary
+		self:log("You have to keep one profile.")
+		return
+	end
+	self.profiles[iID] = nil
+	self.settings.profiles = self.settings.profiles - 1
+	self:LoadProfiles()
+	self:CheckProfileSelector()
+	self:RefreshProfileSelectorDisplay()
+end
+
 
 -----------------------------------------------------------------------------------------------
 -- AfLogicLoot Instance
