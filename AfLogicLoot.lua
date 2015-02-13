@@ -312,7 +312,7 @@ function AfLogicLoot:ChoseProfile()
 				local nMembers = GroupLib.GetMemberCount()
 			
 				for idx = 1, nMembers, 1 do
-				    local uGroupMember = GroupLib:GetUnitForGroupMember(idx)
+				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
 			  		local strGuildName = uGroupMember:GetGuildName()
 					if strGuildName ~= nil then
 						if strGuildName ~= self.guild then
