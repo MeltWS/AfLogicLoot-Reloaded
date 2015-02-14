@@ -335,7 +335,7 @@ function AfLogicLoot:ChoseProfile()
 	if self.scene ~= result then
 		local bChanged = false
 		self.scene = result
-		self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		-- self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
 		
 		if self.settings.profileselector[result] == 1 then
 			if self.settings.active then
