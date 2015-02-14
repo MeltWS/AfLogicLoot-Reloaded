@@ -4,11 +4,15 @@
 -----------------------------------------------------------------------------------------------
  
 require "Window"
+require "GameLib"
+require "GroupLib"
+require "ChatSystemLib"
  
 -----------------------------------------------------------------------------------------------
 -- AfLogicLoot Module Definition
 -----------------------------------------------------------------------------------------------
 local AfLogicLoot = {} 
+local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:GetLocale("AfLogicLoot", true)
  
 -----------------------------------------------------------------------------------------------
 -- Constants
@@ -70,7 +74,6 @@ local tProfileSelectToString = {
 	[7] = "group in open world",
 	[8] = "raid in open world",
 }
-
 
 -----------------------------------------------------------------------------------------------
 -- Initialization
@@ -175,7 +178,7 @@ function AfLogicLoot:new(o)
 	
 	o.profiles = {
 		[1] = {
-			name = "default profile",
+			name = L["default_profile"],
 			settings = self:CopyTable(o.defaultprofile)
 		}
 	}
@@ -263,6 +266,8 @@ function AfLogicLoot:OnDocLoaded()
 			self.guild = uMe:GetGuildName()
 		end
 		
+		self:LocalizeWindow()
+		
 		self:ChoseProfile()
 	end
 end
@@ -271,6 +276,141 @@ end
 -----------------------------------------------------------------------------------------------
 -- AfLogicLoot Functions
 -----------------------------------------------------------------------------------------------
+
+function AfLogicLoot:RecursiveTranslation(wndItem)
+	for idx, wndChild in pairs(wndItem:GetChildren()) do
+		if wndChild:GetName() == "chk_inferior" then wndChild:SetText(L["inferior"]) end
+		if wndChild:GetName() == "chk_average" then wndChild:SetText(L["average"]) end
+		if wndChild:GetName() == "chk_good" then wndChild:SetText(L["good"]) end
+		if wndChild:GetName() == "chk_excellent" then wndChild:SetText(L["excellent"]) end
+		if wndChild:GetName() == "chk_superb" then wndChild:SetText(L["superb"]) end
+		if wndChild:GetName() == "chk_legendary" then wndChild:SetText(L["legendary"]) end
+		if wndChild:GetName() == "chk_artifact" then wndChild:SetText(L["artifact"]) end
+		if wndChild:GetName() == "chk_need" then wndChild:SetText(L["need"]) end
+		if wndChild:GetName() == "chk_greed" then wndChild:SetText(L["greed"]) end
+		if wndChild:GetName() == "chk_pass" then wndChild:SetText(L["pass"]) end
+		if wndChild:GetName() == "chk_no_action" then wndChild:SetText(L["no_action"]) end
+		if wndChild:GetName() == "lbl_caption_quality" then wndChild:SetText(L["quality_below"]) end
+		if wndChild:GetName() == "lbl_caption_action" then wndChild:SetText(L["action"]) end
+		if wndChild:GetName() == "lbl_caption_selected" then wndChild:SetText(L["selected"]) end
+		if wndChild:GetName() == "lbl_caption_otherwise" then wndChild:SetText(L["otherwise"]) end
+		if wndChild:GetName() == "radio_off" then wndChild:SetText(L["profile_turn_off"]) end
+		if wndChild:GetName() == "radio_use_profile" then wndChild:SetText(L["profile_use_profile"]) end
+		self:RecursiveTranslation(wndChild)
+	end
+end
+
+
+function AfLogicLoot:LocalizeWindow()
+	local i
+	
+	self.wndMain:FindChild("btn_equipment1"):SetText(L["equipment1"])
+	self.wndMain:FindChild("btn_equipment1"):SetText(L["equipment1"])
+	self.wndMain:FindChild("btn_style"):SetText(L["style"])
+	self.wndMain:FindChild("btn_crafting"):SetText(L["crafting"])
+	self.wndMain:FindChild("btn_profiles"):SetText(L["profiles"])
+	
+	self.wndMain:FindChild("chk_log"):SetText(L["chk_log"])
+	
+	self:RecursiveTranslation(self.wndMain)
+	
+	self.wndMain:FindChild("chk_excellent_major"):SetText(L["excellent_major"])
+	self.wndMain:FindChild("chk_superb_eldan"):SetText(L["superb_eldan"])
+	self.wndMain:FindChild("lbl_caption_no_need"):SetText(L["no_need"])
+	
+	self.wndMain:FindChild("frm_equip"):FindChild("lbl_category_headline"):SetText(L["equipment_headline"])
+	self.wndMain:FindChild("frm_equip"):FindChild("lbl_category_headline"):SetTooltip(L["equipment_headline_tooltip"])
+	self.wndMain:FindChild("frm_equip"):FindChild("lbl_caption_action"):SetTooltip(L["equipment_action_tooltip"])
+	self.wndMain:FindChild("frm_equip"):FindChild("lbl_caption_no_need"):SetTooltip(L["equipment_no_need_tooltip"])
+	
+	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_category_headline"):SetText(L["sigils_headline"])
+	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_category_headline"):SetTooltip(L["sigils_headline_tooltip"])
+	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_caption_selected"):SetTooltip(L["sigils_selected_tooltip"])
+	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_caption_otherwise"):SetTooltip(L["sigils_otherwise_tooltip"])
+
+	self.wndMain:FindChild("frm_fragments"):FindChild("lbl_category_headline"):SetText(L["fragments_headline"])
+	self.wndMain:FindChild("frm_fragments"):FindChild("lbl_category_headline"):SetTooltip(L["fragments_headline_tooltip"])
+	
+	self.wndMain:FindChild("frm_flux"):FindChild("lbl_category_headline"):SetText(L["flux_headline"])
+	self.wndMain:FindChild("frm_flux"):FindChild("lbl_category_headline"):SetTooltip(L["flux_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_prop"):FindChild("lbl_category_headline"):SetText(L["prop_headline"])
+	self.wndMain:FindChild("frm_prop"):FindChild("lbl_category_headline"):SetTooltip(L["prop_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_amps"):FindChild("lbl_category_headline"):SetText(L["amps_headline"])
+	self.wndMain:FindChild("frm_amps"):FindChild("lbl_category_headline"):SetTooltip(L["amps_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetText(L["bags_headline"])
+	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetTooltip(L["bags_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetText(L["decor_headline"])
+	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetTooltip(L["decor_headline_tooltip"])
+	self.wndMain:FindChild("frm_decor"):FindChild("lbl_caption_selected"):SetTooltip(L["decor_selected_tooltip"])
+	self.wndMain:FindChild("frm_decor"):FindChild("lbl_caption_otherwise"):SetTooltip(L["decor_otherwise_tooltip"])
+	
+	self.wndMain:FindChild("frm_fabkits"):FindChild("lbl_category_headline"):SetText(L["fabkits_headline"])
+	self.wndMain:FindChild("frm_fabkits"):FindChild("lbl_category_headline"):SetTooltip(L["fabkits_headline_tooltip"])
+	self.wndMain:FindChild("frm_fabkits"):FindChild("lbl_caption_selected"):SetTooltip(L["fabkits_selected_tooltip"])
+	self.wndMain:FindChild("frm_fabkits"):FindChild("lbl_caption_otherwise"):SetTooltip(L["fabkits_otherwise_tooltip"])
+	
+	self.wndMain:FindChild("frm_dye"):FindChild("lbl_category_headline"):SetText(L["dye_headline"])
+	self.wndMain:FindChild("frm_dye"):FindChild("lbl_category_headline"):SetTooltip(L["dye_headline_tooltip"])
+	
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("lbl_category_headline"):SetText(L["catalysts_my_headline"])
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("lbl_category_headline"):SetTooltip(L["catalysts_my_headline_tooltip"])
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("lbl_caption_selected"):SetTooltip(L["catalysts_my_selected_tooltip"])
+	self.wndMain:FindChild("frm_catalysts_my"):FindChild("lbl_caption_otherwise"):SetTooltip(L["catalysts_my_otherwise_tooltip"])
+	
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("lbl_category_headline"):SetText(L["catalysts_other_headline"])
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("lbl_category_headline"):SetTooltip(L["catalysts_other_headline_tooltip"])
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("lbl_caption_selected"):SetTooltip(L["catalysts_other_selected_tooltip"])
+	self.wndMain:FindChild("frm_catalysts_other"):FindChild("lbl_caption_otherwise"):SetTooltip(L["catalysts_other_otherwise_tooltip"])
+	
+	self.wndMain:FindChild("frm_schematics"):FindChild("lbl_category_headline"):SetText(L["schematics_headline"])
+	self.wndMain:FindChild("frm_schematics"):FindChild("lbl_category_headline"):SetTooltip(L["schematics_headline_tooltip"])
+	
+	self.wndMain:FindChild("frm_survivalist"):FindChild("lbl_category_headline"):SetText(L["survivalist_headline"])
+	self.wndMain:FindChild("frm_survivalist"):FindChild("lbl_category_headline"):SetTooltip(L["survivalist_headline_tooltip"])
+	
+	self.wndMain:FindChild("frm_cloth"):FindChild("lbl_category_headline"):SetText(L["cloth_headline"])
+	self.wndMain:FindChild("frm_cloth"):FindChild("lbl_category_headline"):SetTooltip(L["cloth_headline_tooltip"])
+	
+	self.wndMain:FindChild("frm_profile_manager"):FindChild("lbl_category_headline"):SetText(L["profile_management"])
+	self.wndMain:FindChild("frm_profile_manager"):FindChild("lbl_title_name"):SetText(L["profile_title"])
+	self.wndMain:FindChild("frm_profile_manager"):FindChild("btn_add"):SetText(L["profile_add"])
+	self.wndMain:FindChild("frm_profile_manager"):FindChild("lbl_explanation"):SetText(L["profile_explanation"])
+	
+	for i = 1, 8, 1 do
+		self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("btn_set_profile"..i):SetTooltip(L["profile_select_that"])
+	end
+
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_category_headline"):SetText(L["profile_automatic_headline"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_category_headline"):SetTooltip(L["profile_automatic_headline_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_group"):SetText(L["profile_ini_group"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_zero"):SetText(L["profile_group_zero"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_one"):SetText(L["profile_group_one"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_two"):SetText(L["profile_group_two"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_three"):SetText(L["profile_group_three"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_four"):SetText(L["profile_group_four"])
+	
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_raid"):SetText(L["profile_ini_raid"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group"):SetText(L["profile_group"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_raid"):SetText(L["profile_raid"])
+	
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetText(L["profile_automatic"])
+	
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_group"):SetTooltip(L["profile_ini_group_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_zero"):SetTooltip(L["profile_group_zero_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_one"):SetTooltip(L["profile_group_one_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_two"):SetTooltip(L["profile_group_two_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_three"):SetTooltip(L["profile_group_three_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_four"):SetTooltip(L["profile_group_four_tt"])
+	
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_raid"):SetTooltip(L["profile_ini_raid_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group"):SetTooltip(L["profile_group_tt"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_raid"):SetTooltip(L["profile_raid_tt"])
+end
+
 
 function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 	local item = Item.GetDataFromId(strParam)
@@ -313,13 +453,15 @@ function AfLogicLoot:ChoseProfile()
 			
 				for idx = 1, nMembers, 1 do
 				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
-			  		local strGuildName = uGroupMember:GetGuildName()
-					if strGuildName ~= nil then
-						if strGuildName ~= self.guild then
+					if uGroupMember then
+				  		local strGuildName = uGroupMember:GetGuildName()
+						if strGuildName ~= nil then
+							if strGuildName ~= self.guild then
+								iRandoms = iRandoms + 1
+							end
+						else
 							iRandoms = iRandoms + 1
 						end
-					else
-						iRandoms = iRandoms + 1
 					end
 					result = tProfileSelect.ini.group[iRandoms]
 				end
@@ -335,7 +477,7 @@ function AfLogicLoot:ChoseProfile()
 	if self.scene ~= result then
 		local bChanged = false
 		self.scene = result
-		-- self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
 		
 		if self.settings.profileselector[result] == 1 then
 			if self.settings.active then
@@ -350,7 +492,7 @@ function AfLogicLoot:ChoseProfile()
 		end
 		
 		if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
-			self:log("switching to profile: "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
 			self.settings.activeprofile = self.settings.profileselectorprofile[result]
 			self:LoadProfiles()
 			bChanged = true
@@ -362,6 +504,23 @@ function AfLogicLoot:ChoseProfile()
 			Sound.PlayFile("./sounds/chatnotify.wav")
 		end
 	end
+end
+
+
+function AfLogicLoot:RegExSafe(strMessage)
+	strMessage = strMessage:gsub("%%", "%%%%")
+	strMessage = strMessage:gsub("%^", "%%%^")
+	strMessage = strMessage:gsub("%$", "%%%$")
+	strMessage = strMessage:gsub("%(", "%%%(")
+	strMessage = strMessage:gsub("%)", "%%%)")
+	strMessage = strMessage:gsub("%.", "%%%.")
+	strMessage = strMessage:gsub("%[", "%%%[")
+	strMessage = strMessage:gsub("%]", "%%%]")
+	strMessage = strMessage:gsub("%*", "%%%*")
+	strMessage = strMessage:gsub("%+", "%%%+")
+	strMessage = strMessage:gsub("%-", "%%%-")
+	strMessage = strMessage:gsub("%?", "%%%?")	
+	return strMessage
 end
 
 
@@ -622,7 +781,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			-- can only be old version, because OnRestore isn't called at first start, because nothing gets loaded!
 			-- create default profile in both cases
 			self.profiles[1] = {
-				name = "default profile",
+				name = L["default_profile"],
 				settings = self:CopyTable(self.defaultprofile),
 			}
 			self.settings.profiles = 1
@@ -719,12 +878,13 @@ function AfLogicLoot:PostLootMessage(uItem, iChoice, strCategory)
 	if iChoice == LootAction.none then return end
 	if not self.settings.log then return end
 	
-	local strMessage = "Selecting "
-	if iChoice == LootAction.need then strMessage = strMessage .. "NEED" end
-	if iChoice == LootAction.greed then strMessage = strMessage .. "GREED" end
-	strMessage = strMessage .. " "
-	if iChoice == LootAction.pass then strMessage = "PASSING " end
-	strMessage = strMessage .. "on ".. uItem:GetChatLinkString() .. " from category " .. strCategory
+	local strMessage = L["msg_action_log_sentence"]
+	
+	if iChoice == LootAction.need then strMessage = strMessage:gsub("%[ACTION%]", L["msg_action_log_sentence_need"]) end
+	if iChoice == LootAction.greed then strMessage = strMessage:gsub("%[ACTION%]", L["msg_action_log_sentence_greed"]) end
+	if iChoice == LootAction.pass then strMessage = strMessage:gsub("%[ACTION%]", L["msg_action_log_sentence_pass"]) end
+	strMessage = strMessage:gsub("%[ITEM%]", uItem:GetChatLinkString())
+	strMessage = strMessage:gsub("%[CATEGORY%]", strCategory)
 	self:log(strMessage)
 end
 
@@ -742,10 +902,10 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	if (itype == 155) then
 		if quality <= self.profiles[self.settings.activeprofile].settings.decor.quality then
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.decor.below)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.below, "Decor of and below selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.below, L["decor_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 		else
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.decor.above)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.above, "Decor above selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.decor.above, L["decor_headline"]..", "..L["msg_action_log_sentence_quality_above"])
 		end
 		return
 	end
@@ -754,10 +914,10 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	if (itype == 164) then
 		if quality <= self.profiles[self.settings.activeprofile].settings.fabkits.quality then
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fabkits.below)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.below, "FABkits of and below selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.below, L["fabkits_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 		else
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fabkits.above)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.above, "FABkits above selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fabkits.above, L["fabkits_headline"]..", "..L["msg_action_log_sentence_quality_above"])
 		end
 		return
 	end	
@@ -765,7 +925,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	-- Fragments
 	if (itype == 359) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fragments.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fragments.all, "Fragments")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fragments.all, L["fragments_headline"])
 		return
 	end
 
@@ -773,10 +933,10 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	if (category == 120) then
 		if quality <= self.profiles[self.settings.activeprofile].settings.sigils.quality then
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.below)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.below, "Sigils of and below selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.below, L["sigils_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 		else
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.above)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.above, "Sigils above selected quality")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.above, L["sigils_headline"]..", "..L["msg_action_log_sentence_quality_above"])
 		end		
 		return
 	end
@@ -784,14 +944,14 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	-- Survivalist
 	if (category == 110) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.survivalist.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.survivalist.all, "Survivalist")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.survivalist.all, L["survivalist_headline"])
 		return
 	end
 	
 	-- Cloth
 	if (category == 113) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.cloth.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.cloth.all, "Cloth")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.cloth.all, L["cloth_headline"])
 		return
 	end
 	
@@ -799,28 +959,28 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	--  dye collection    dye
 	if (itype == 349) or (itype == 332) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.dye.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.dye.all, "Dye")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.dye.all, L["dye_headline"])
 		return
 	end
 		
 	-- Flux
 	if (itype == 465) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.flux.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.flux.all, "Runic Flux")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.flux.all, L["flux_headline"])
 		return
 	end
 	
 	-- Proprietary Material
 	if (category == 128) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.prop.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.prop.all, "Proprietary Material")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.prop.all, L["prop_headline"])
 		return
 	end
 	
 	-- Bags
 	if (itype == 134) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.bags.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.bags.all, "Bags")
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.bags.all, L["bags_headline"])
 		return
 	end
 	
@@ -838,14 +998,14 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		end
 		if bNeed then
 			self:DoLootAction(lootid, LootAction.need)
-			self:PostLootMessage(item, LootAction.need, "AMP and Schematics you don't already own")
+			self:PostLootMessage(item, L["useful_amps_schematics"])
 		else
 			if (family == 32) then
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.amps.all)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.amps.all, "AMP")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.amps.all, L["amps_headline"])
 			else
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.schematics.all)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.schematics.all, "Schematics")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.schematics.all, L["schematics_headline"])
 			end
 		end
 		
@@ -867,18 +1027,18 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		if bCouldUse then
 			if quality <= self.profiles[self.settings.activeprofile].settings.catalysts.my.quality then
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.my.below)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.below, "useful catalysts below selected quality")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.below, L["catalysts_my_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 			else
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.my.above)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.above, "useful catalysts above selected quality")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.my.above, L["catalysts_my_headline"]..", "..L["msg_action_log_sentence_quality_above"])
 			end		
 		else
 			if quality <= self.profiles[self.settings.activeprofile].settings.catalysts.other.quality then
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.other.below)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.below, "other catalysts below selected quality")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.below, L["catalysts_other_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 			else
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.catalysts.other.above)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.above, "other catalysts above selected quality")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.catalysts.other.above, L["catalysts_other_headline"]..", "..L["msg_action_log_sentence_quality_above"])
 			end				
 		end
 		return
@@ -889,22 +1049,21 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	if (family == 1) or (family == 2) or (family == 15) then
 		if not GameLib.IsNeedRollAllowed(lootid) then
 			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.noneed)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, "Equipment, not needable")
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, L["equipment_headline"]..", "..L["equipment_not_wearable"])
 		else
 			if item:IsEquippable() then
 				if quality <= self.profiles[self.settings.activeprofile].settings.equipment.quality then
 					self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.below)
-					self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.below, "Equipment")
+					self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.below, L["equipment_headline"]..", "..L["msg_action_log_sentence_quality_below"])
 				end
 			else
 				-- does this ever fire?
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.equipment.noneed)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, "Equipment, not wearable")
+				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.equipment.noneed, L["equipment_headline"]..", "..L["equipment_not_wearable"])
 			end
 		end
 		return
 	end
-	
 	
 	-- Not categorized now: analyze it
 	-- self:analyze(item)
@@ -936,7 +1095,7 @@ end
 
 
 function AfLogicLoot:analyze(item)
-	self:log("ITEM: "..item:GetItemId().." "..item:GetName())
+	self:log("ITM: "..item:GetItemId().." "..item:GetName())
 	self:log("CAT: "..item:GetItemCategory().." "..item:GetItemCategoryName())
 	self:log("FAM: "..item:GetItemFamily().." "..item:GetItemFamilyName())
 	self:log("TYP: "..item:GetItemType().." "..item:GetItemTypeName())
@@ -961,9 +1120,9 @@ function AfLogicLoot:SetStatus(bActive)
 	wndToggleButton1:Show(bActive)
 	wndToggleButton2:Show(bActive == false)
 	if bActive then
-		self:log("activated")
+		self:log(L["msg_activated"])
 	else
-		self:log("deactivated")
+		self:log(L["msg_deactivated"])
 	end
 end
 
@@ -972,7 +1131,7 @@ function AfLogicLoot:AddProfile()
 	local wndInput = self.wndMain:FindChild("txt_profile_name")
 	local strName = wndInput:GetText()
 	if strName:len() == 0 then
-		self:log("please enter a name for that profile")
+		self:log(L["msg_error_name_missing"])
 		return
 	end
 	
@@ -1001,6 +1160,7 @@ function AfLogicLoot:LoadProfiles()
 		local wndEntry = Apollo.LoadForm(self.xmlDoc, "frm_entry_profiles", wndContainer, self)
 		wndEntry:FindChild("lbl_entry_name"):SetText(tProfile.name)
 		wndEntry:FindChild("btn_delete"):SetData(idx)
+		wndEntry:FindChild("btn_delete"):SetTooltip(L["profile_delete"])
 		-- Profile selector
 		local wndEntry = Apollo.LoadForm(self.xmlDoc, "frm_entry_single_profile", wndPopupContainer, self)
 		local wndButton = wndEntry:FindChild("btn_entry")
@@ -1089,12 +1249,12 @@ function AfLogicLoot:OnDeleteProfile(wndHandler, wndControl, eMouseButton)
 	-- wndControl:GetParent():Destroy()
 	local iID = wndControl:GetData()
 	if iID == self.settings.activeprofile then
-		self:log("You can not delete the active profile. Activate another profile first.")
+		self:log(L["msg_error_no_delete"])
 		return
 	end
 	if self.settings.profiles == 1 then
-		-- shouldn't fire and therefore make self.settings.profiles unneccessary
-		self:log("You have to keep one profile.")
+		-- shouldn't fire and therefore make self.settings.profiles unneccessary - ach ja? komm doch her!
+		self:log(L["msg_error_keep_last"])
 		return
 	end
 	self.profiles[iID] = nil

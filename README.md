@@ -57,3 +57,13 @@ And then there's loot where there's no "need" button in the game. For those item
 ## Tooltips
 
 Yes, there are some. Hover the mouse over the title of a section or of an action and you will find short explanations whitin the addon.
+
+
+## General Looting Rules
+
+Quite often you'll see people who aren't absolutely sure, what to select when, so I want to summarize the rules quickly:
+
+* if you want to wear or use it, you *need* it
+* if you just want to sell or salvage it or you don't mind, you *greed* it
+
+So it's quite simple. There is no answer to the question "what do I have to press on runes". Do you need them? Meaning are you going to build runes for your equipment yourself? So you'll definitely *need* runes. You only buy runes from the AH? Then you seem to just want the money they are worth.
