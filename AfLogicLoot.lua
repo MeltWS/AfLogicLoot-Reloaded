@@ -1014,7 +1014,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		end
 		if bNeed then
 			self:DoLootAction(lootid, LootAction.need)
-			self:PostLootMessage(item, L["useful_amps_schematics"])
+			self:PostLootMessage(item, LootAction.need, L["useful_amps_schematics"])
 		else
 			if (family == 32) then
 				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.amps.all)
