@@ -249,7 +249,7 @@ function AfLogicLoot:OnDocLoaded()
 
 		Apollo.RegisterEventHandler("Group_Add",        "ChoseProfile",        self)
 		Apollo.RegisterEventHandler("Group_Left",       "ChoseProfile",        self)
-		Apollo.RegisterEventHandler("Group_Update",     "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Updated",    "ChoseProfile",        self)
 		Apollo.RegisterEventHandler("Group_Join",       "ChoseProfile",        self)
 		Apollo.RegisterEventHandler("Group_Remove",     "ChoseProfile",        self)
 				
