@@ -1,5 +1,6 @@
 local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("AfLogicLoot", "enUS", true)
 
+
 -- DON'T EDIT WITH HOUSTON AS IT LOSES ENCODING SETTINGS
 -- USE SOMETHING LIKE NOTEPAD++ FOR THAT TASK
 
@@ -149,6 +150,7 @@ L["profile_raid"]        = "Raids"
 L["profile_raid_tt"]     = "open world events where you group up in raids"
 
 L["profile_automatic"] = "activate automatic profile selection"
+L["profile_hudlog"]    = "more obstrusive notifications"
 
 -- messages
 

@@ -87,6 +87,7 @@ function AfLogicLoot:new(o)
     -- default settings for new installation, will be overwritten otherwise
 	o.settings = {
 		log = true,
+		hudlog = true,
 		active = true,
 		profiles = 1,
 		lastprofile = 1,
@@ -185,6 +186,10 @@ function AfLogicLoot:new(o)
 	
 	o.scene = 0
 	
+	o.hudqueue = {}
+	o.hudid = 0
+	o.hudlast = 0
+	
     return o
 end
 
@@ -225,6 +230,9 @@ function AfLogicLoot:OnDocLoaded()
 		end
 		
 	    self.wndMain:Show(false, true)
+		
+		self.wndHud = Apollo.LoadForm(self.xmlDoc, "frm_hud", nil, self)
+		self.wndHud:Show(false, true)
 
 		-- if the xmlDoc is no longer needed, you should set it to nil
 		-- self.xmlDoc = nil
@@ -234,6 +242,8 @@ function AfLogicLoot:OnDocLoaded()
 		Apollo.RegisterSlashCommand("afloot", "OnAfLogicLootOn", self)
 
 		self.timer = ApolloTimer.Create(15.0, false, "OnTimer", self)
+		self.hudtimer = ApolloTimer.Create(15.0, true, "NextHudLog", self)
+		self.hudtimer:Stop()
 
 		Apollo.RegisterEventHandler("LootRollUpdate", "OnLootRollUpdate", self)
 
@@ -398,6 +408,7 @@ function AfLogicLoot:LocalizeWindow()
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_raid"):SetText(L["profile_raid"])
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetText(L["profile_automatic"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_hudlog"):SetText(L["profile_hudlog"])
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_group"):SetTooltip(L["profile_ini_group_tt"])
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_zero"):SetTooltip(L["profile_group_zero_tt"])
@@ -433,7 +444,6 @@ function AfLogicLoot:OnConfigure()
 	self.wndMain:Invoke()
 	self:SettingsToGUI()
 end
-
 
 
 function AfLogicLoot:ChoseProfile()
@@ -478,6 +488,9 @@ function AfLogicLoot:ChoseProfile()
 		local bChanged = false
 		self.scene = result
 		self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		if self.settings.hudlog then
+			self:HudLog("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		end
 		
 		if self.settings.profileselector[result] == 1 then
 			if self.settings.active then
@@ -493,12 +506,15 @@ function AfLogicLoot:ChoseProfile()
 		
 		if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
 			self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			if self.settings.hudlog then
+				self:HudLog(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			end
 			self.settings.activeprofile = self.settings.profileselectorprofile[result]
 			self:LoadProfiles()
 			bChanged = true
 		end
 		
-		if bChanged then
+		if bChanged and not self.settings.hudlog then
 			-- even if the scene switched, the resulting profile may be the same
 			-- this fires only, if the profile or the online status changed
 			Sound.PlayFile("./sounds/chatnotify.wav")
@@ -526,6 +542,7 @@ end
 
 function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("chk_log"):SetCheck(self.settings.log)
+	self.wndMain:FindChild("chk_hudlog"):SetCheck(self.settings.hudlog)
 	
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.profiles[self.settings.activeprofile].settings.decor.quality)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.profiles[self.settings.activeprofile].settings.decor.below)
@@ -567,6 +584,7 @@ end
 
 function AfLogicLoot:GUIToSettings()
 	self.settings.log = self.wndMain:FindChild("chk_log"):IsChecked()
+	self.settings.hudlog = self.wndMain:FindChild("chk_hudlog"):IsCheck()
 	self.profiles[self.settings.activeprofile].settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
 	self.profiles[self.settings.activeprofile].settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
 	self.profiles[self.settings.activeprofile].settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
@@ -604,9 +622,7 @@ function AfLogicLoot:GUIToSettings()
 	self.settings.profileselector[tProfileSelect.world.raid] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("raid_world")	
 	self.settings.automaticprofiles = self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):IsChecked()
 end
-
 	
-
 	
 function AfLogicLoot:RefreshProfileSelectorDisplay()
 	local i
@@ -665,6 +681,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			-- replacing single values to not overwrite new default values by not existing values
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
 			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
+			if tSavedData.settings.hudlog ~= nil then self.settings.hudlog = tSavedData.settings.hudlog end
 			if tSavedData.settings.automaticprofiles ~= nil then self.settings.automaticprofiles = tSavedData.settings.automaticprofiles end
 			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
 			if tSavedData.settings.activeprofile ~= nil then 
@@ -688,7 +705,6 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			end						
 			
 		end
-
 		
 		if tSavedData.profiles ~= nil then
 		
@@ -1167,12 +1183,36 @@ function AfLogicLoot:LoadProfiles()
 		wndButton:SetText(tProfile.name)
 		wndButton:SetData(idx)
 	end
-	
-	
+		
 	wndContainer:ArrangeChildrenVert()
 	wndPopupContainer:ArrangeChildrenVert()	
 	
 	self.wndMain:FindChild("frm_combobox_selector"):FindChild("btn_text"):SetText(self.profiles[self.settings.activeprofile].name)
+end
+
+
+function AfLogicLoot:HudLog(strMessage)
+	self.hudlast = self.hudlast + 1
+	self.hudqueue[self.hudlast] = strMessage
+	if not self.wndHud:IsVisible() then
+		self:NextHudLog()
+	end
+	return
+end
+
+
+function AfLogicLoot:NextHudLog()
+	self.hudtimer:Stop()
+	if self.hudid == self.hudlast then
+		self.wndHud:Show(false)
+		return
+	end
+	self.hudid = self.hudid + 1
+	self.wndHud:SetText(self.hudqueue[self.hudid])
+	self.wndHud:ToFront()
+	self.wndHud:Show(true)
+	self.hudtimer:Start()
+	Sound.PlayFile("./sounds/chatnotify.wav")
 end
 
 
@@ -1228,6 +1268,7 @@ function AfLogicLoot:OnAssignProfile(wndHandler, wndControl, eMouseButton)
 	self.settings.profileselector[iProfile] = 2
 	self:RefreshProfileSelectorDisplay()
 end
+
 
 ---------------------------------------------------------------------------------------------------
 -- frm_entry_single_profile Functions

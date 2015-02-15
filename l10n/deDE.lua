@@ -59,7 +59,7 @@ L["fragments_headline_tooltip"] = "Material wie \"augmentiertes Runenfragment\" 
 
 -- runic flux
 L["flux_headline"]         = "Runenflux"
-L["flux_headline_tooltip"] = "\"Runen-Elementar-Flux\" und \"Eldanisches Runienmodul\", Material zum Ändern und Freischalten von Runen-Slots."
+L["flux_headline_tooltip"] = "\"Runen-Elementar-Flux\" und \"Eldanisches Runenmodul\", Material zum Ändern und Freischalten von Runen-Slots."
 
 -- proprietary material
 L["prop_headline"]         = "Geheimes Material"
@@ -67,7 +67,7 @@ L["prop_headline_tooltip"] = "\"Unvollständiges Urmuster\", \"verschlüsselter 
 
 -- AMPs
 L["amps_headline"]         = "VIPs ohne Nutzen"
-L["amps_headline_tooltip"] = "bei VIPs, die du noch brauchst, wird automatisch \"Bedarf\" gewählt."
+L["amps_headline_tooltip"] = "Bei VIPs, die du noch brauchst, wird automatisch \"Bedarf\" gewählt."
 
 -- AMPs and schematics you really need
 L["useful_amps_schematics"] = "VIPs und Rezepte, die du noch nicht besitzt"
@@ -150,6 +150,7 @@ L["profile_raid"]        = "Raids"
 L["profile_raid_tt"]     = "Events in der freien Welt, bei denen man sich in Raids sammelt"
 
 L["profile_automatic"] = "automatische Profil-Auswahl aktivieren"
+L["profile_hudlog"]    = "aufdringlichere Benachrichtigung"
 
 -- messages
 
