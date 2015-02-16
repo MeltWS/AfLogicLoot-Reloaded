@@ -435,8 +435,6 @@ function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 		self:SetStatus(false)
 	elseif strParam == "toggle" then
 		self:SetStatus(not self.settings.active)
-	elseif strParam == "test" then
-		self:test()
 	else
 		self.wndMain:Invoke()
 		self:SettingsToGUI()
