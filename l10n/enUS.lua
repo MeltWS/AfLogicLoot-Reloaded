@@ -149,8 +149,9 @@ L["profile_group_tt"]    = "in a group in the open world: maybe levelling or doi
 L["profile_raid"]        = "Raids"
 L["profile_raid_tt"]     = "open world events where you group up in raids"
 
-L["profile_automatic"] = "activate automatic profile selection"
-L["profile_hudlog"]    = "more obstrusive notifications"
+L["profile_automatic"   ] = "activate automatic profile selection"
+L["profile_hudlog"]       = "more obstrusive notifications"
+L["profile_log_scene"]    = "also log scene switch"
 
 -- messages
 

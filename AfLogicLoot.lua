@@ -88,6 +88,7 @@ function AfLogicLoot:new(o)
 	o.settings = {
 		log = true,
 		hudlog = true,
+		scenelog = false,
 		active = true,
 		profiles = 1,
 		lastprofile = 1,
@@ -409,6 +410,7 @@ function AfLogicLoot:LocalizeWindow()
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetText(L["profile_automatic"])
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_hudlog"):SetText(L["profile_hudlog"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_log_scene"):SetText(L["profile_log_scene"])	
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_group"):SetTooltip(L["profile_ini_group_tt"])
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_zero"):SetTooltip(L["profile_group_zero_tt"])
@@ -487,9 +489,11 @@ function AfLogicLoot:ChoseProfile()
 	if self.scene ~= result then
 		local bChanged = false
 		self.scene = result
-		self:log("DEBUG: Scene switched to "..tProfileSelectToString[result])
-		if self.settings.hudlog then
-			self:HudLog("DEBUG: Scene switched to "..tProfileSelectToString[result])
+		if self.settings.scenelog then
+			self:log("Scene switched to "..tProfileSelectToString[result])
+			if self.settings.hudlog then
+				self:HudLog("Scene switched to "..tProfileSelectToString[result])
+			end
 		end
 		
 		if self.settings.profileselector[result] == 1 then
@@ -543,6 +547,7 @@ end
 function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("chk_log"):SetCheck(self.settings.log)
 	self.wndMain:FindChild("chk_hudlog"):SetCheck(self.settings.hudlog)
+	self.wndMain:FindChild("chk_log_scene"):SetCheck(self.settings.scenelog)
 	
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):SetRadioSel("decor_quality", self.profiles[self.settings.activeprofile].settings.decor.quality)
 	self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):SetRadioSel("decor_below", self.profiles[self.settings.activeprofile].settings.decor.below)
@@ -584,7 +589,9 @@ end
 
 function AfLogicLoot:GUIToSettings()
 	self.settings.log = self.wndMain:FindChild("chk_log"):IsChecked()
-	self.settings.hudlog = self.wndMain:FindChild("chk_hudlog"):IsCheck()
+	self.settings.hudlog = self.wndMain:FindChild("chk_hudlog"):IsChecked()
+	self.settings.scenelog = self.wndMain:FindChild("chk_log_scene"):IsChecked()
+	
 	self.profiles[self.settings.activeprofile].settings.decor.quality = self.wndMain:FindChild("frm_decor"):FindChild("frm_quality"):GetRadioSel("decor_quality")
 	self.profiles[self.settings.activeprofile].settings.decor.below = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_below"):GetRadioSel("decor_below")
 	self.profiles[self.settings.activeprofile].settings.decor.above = self.wndMain:FindChild("frm_decor"):FindChild("frm_action_above"):GetRadioSel("decor_above")
@@ -682,6 +689,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			if tSavedData.settings.firstconfigureshown ~= nil then self.settings.firstconfigureshown = tSavedData.settings.firstconfigureshown end
 			if tSavedData.settings.log ~= nil then self.settings.log = tSavedData.settings.log end
 			if tSavedData.settings.hudlog ~= nil then self.settings.hudlog = tSavedData.settings.hudlog end
+			if tSavedData.settings.scenelog ~= nil then self.settings.scenelog = tSavedData.settings.scenelog end
 			if tSavedData.settings.automaticprofiles ~= nil then self.settings.automaticprofiles = tSavedData.settings.automaticprofiles end
 			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
 			if tSavedData.settings.activeprofile ~= nil then 

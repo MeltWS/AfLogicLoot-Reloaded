@@ -149,8 +149,9 @@ L["profile_group_tt"]    = "in einer Gruppe in der freien Welt: vielleicht Level
 L["profile_raid"]        = "Raids"
 L["profile_raid_tt"]     = "Events in der freien Welt, bei denen man sich in Raids sammelt"
 
-L["profile_automatic"] = "automatische Profil-Auswahl aktivieren"
-L["profile_hudlog"]    = "aufdringlichere Benachrichtigung"
+L["profile_automatic"]    = "automatische Profil-Auswahl aktivieren"
+L["profile_hudlog"]       = "aufdringlichere Benachrichtigung"
+L["profile_log_scene"]    = "auch Szenenwechsel melden"
 
 -- messages
 
