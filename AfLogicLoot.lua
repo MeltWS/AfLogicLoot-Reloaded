@@ -435,6 +435,8 @@ function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 		self:SetStatus(false)
 	elseif strParam == "toggle" then
 		self:SetStatus(not self.settings.active)
+	elseif strParam == "test" then
+		self:test()
 	else
 		self.wndMain:Invoke()
 		self:SettingsToGUI()
@@ -475,8 +477,8 @@ function AfLogicLoot:ChoseProfile()
 							iRandoms = iRandoms + 1
 						end
 					end
-					result = tProfileSelect.ini.group[iRandoms]
 				end
+				result = tProfileSelect.ini.group[iRandoms]
 			end
 		end
 	else
