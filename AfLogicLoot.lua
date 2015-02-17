@@ -279,7 +279,6 @@ function AfLogicLoot:OnDocLoaded()
 		
 		self:LocalizeWindow()
 		
-		self:ChoseProfile()
 	end
 end
 
@@ -462,7 +461,10 @@ function AfLogicLoot:ChoseProfile()
 				-- calculate number of randoms
 				local iRandoms = 0
 				local nMembers = GroupLib.GetMemberCount()
-			
+				local uMe = GameLib.GetPlayerUnit()
+				if uMe then
+					self.guild = uMe:GetGuildName()
+				end			
 				for idx = 1, nMembers, 1 do
 				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
 					if uGroupMember then
@@ -1128,6 +1130,7 @@ end
 
 
 function AfLogicLoot:OnTimer()
+	self:ChoseProfile()
 end
 
 
