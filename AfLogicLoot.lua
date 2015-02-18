@@ -451,6 +451,7 @@ function AfLogicLoot:ChoseProfile()
 	if not self.settings.automaticprofiles then return end
 	if not GroupLib.InGroup() then return end
 	local result = 0
+	local validTry = true
 	if GroupLib.InInstance() then
 		if GroupLib.InRaid() then
 			result = tProfileSelect.ini.raid
@@ -464,8 +465,13 @@ function AfLogicLoot:ChoseProfile()
 				local uMe = GameLib.GetPlayerUnit()
 				if uMe then
 					self.guild = uMe:GetGuildName()
-				end			
+				end
 				for idx = 1, nMembers, 1 do
+					local uMember = GroupLib.GetGroupMember(idx)
+					local thisTry = false
+					if uMember.bIsOnline then
+						thisTry = true
+					end
 				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
 					if uGroupMember then
 				  		local strGuildName = uGroupMember:GetGuildName()
@@ -475,6 +481,10 @@ function AfLogicLoot:ChoseProfile()
 							end
 						else
 							iRandoms = iRandoms + 1
+						end
+					else
+						if thisTry then
+							validTry = false
 						end
 					end
 				end
@@ -488,42 +498,44 @@ function AfLogicLoot:ChoseProfile()
 			result = tProfileSelect.world.group
 		end
 	end
-	if self.scene ~= result then
-		local bChanged = false
-		self.scene = result
-		if self.settings.scenelog then
-			self:log("Scene switched to "..tProfileSelectToString[result])
-			if self.settings.hudlog then
-				self:HudLog("Scene switched to "..tProfileSelectToString[result])
+	if validTry then
+		if self.scene ~= result then
+			local bChanged = false
+			self.scene = result
+			if self.settings.scenelog then
+				self:log("Scene switched to "..tProfileSelectToString[result])
+				if self.settings.hudlog then
+					self:HudLog("Scene switched to "..tProfileSelectToString[result])
+				end
 			end
-		end
-		
-		if self.settings.profileselector[result] == 1 then
-			if self.settings.active then
-				self:SetStatus(false)
+			
+			if self.settings.profileselector[result] == 1 then
+				if self.settings.active then
+					self:SetStatus(false)
+					bChanged = true
+				end
+			else
+				if not self.settings.active then
+					self:SetStatus(true)
+					bChanged = true
+				end
+			end
+			
+			if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
+				self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+				if self.settings.hudlog then
+					self:HudLog(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+				end
+				self.settings.activeprofile = self.settings.profileselectorprofile[result]
+				self:LoadProfiles()
 				bChanged = true
 			end
-		else
-			if not self.settings.active then
-				self:SetStatus(true)
-				bChanged = true
+			
+			if bChanged and not self.settings.hudlog then
+				-- even if the scene switched, the resulting profile may be the same
+				-- this fires only, if the profile or the online status changed
+				Sound.PlayFile("./sounds/chatnotify.wav")
 			end
-		end
-		
-		if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
-			self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
-			if self.settings.hudlog then
-				self:HudLog(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
-			end
-			self.settings.activeprofile = self.settings.profileselectorprofile[result]
-			self:LoadProfiles()
-			bChanged = true
-		end
-		
-		if bChanged and not self.settings.hudlog then
-			-- even if the scene switched, the resulting profile may be the same
-			-- this fires only, if the profile or the online status changed
-			Sound.PlayFile("./sounds/chatnotify.wav")
 		end
 	end
 end
