@@ -76,6 +76,10 @@ L["useful_amps_schematics"] = "VIPs und Rezepte, die du noch nicht besitzt"
 L["bags_headline"]         = "Taschen"
 L["bags_headline_tooltip"] = "Taschen erweitern deinen Platz im Rucksack."
 
+-- scanbot vanity
+L["scanbot_headline"]         = "ScanBot-Schmuck"
+L["scanbot_headline_tooltip"] = "Zeug, das man an den ScanBot anbauen kann."
+
 -- decor
 L["decor_headline"]          = "Dekor"
 L["decor_headline_tooltip"]  = "Nur Dekor, keine BAUsätze,"

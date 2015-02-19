@@ -76,6 +76,10 @@ L["useful_amps_schematics"] = "AMP and Schematics you don't already own"
 L["bags_headline"]         = "Bags"
 L["bags_headline_tooltip"] = "Bags expand your inventory."
 
+-- scanbot vanity
+L["scanbot_headline"]         = "ScanBot Vanity"
+L["scanbot_headline_tooltip"] = "Stuff to attach to your scanbot."
+
 -- decor
 L["decor_headline"]          = "Decor"
 L["decor_headline_tooltip"]  = "Just decor, no FABkits."

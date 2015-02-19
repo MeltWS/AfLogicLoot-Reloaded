@@ -158,6 +158,9 @@ function AfLogicLoot:new(o)
 		bags = {
 			all = LootAction.none,
 		},
+		scanbot = {
+			all = LootAction.none,
+		},
 		amps = {
 			all = LootAction.none,
 		},
@@ -353,6 +356,9 @@ function AfLogicLoot:LocalizeWindow()
 
 	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetText(L["bags_headline"])
 	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetTooltip(L["bags_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_scanbot"):FindChild("lbl_category_headline"):SetText(L["scanbot_headline"])
+	self.wndMain:FindChild("frm_scanbot"):FindChild("lbl_category_headline"):SetTooltip(L["scanbot_headline_tooltip"])
 
 	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetText(L["decor_headline"])
 	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetTooltip(L["decor_headline_tooltip"])
@@ -585,6 +591,7 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):SetRadioSel("catalyst_other_below", self.profiles[self.settings.activeprofile].settings.catalysts.other.below)
 	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):SetRadioSel("catalyst_other_above", self.profiles[self.settings.activeprofile].settings.catalysts.other.above)
 	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.profiles[self.settings.activeprofile].settings.bags.all)
+	self.wndMain:FindChild("frm_scanbot"):FindChild("frm_action"):SetRadioSel("scanbot_all", self.profiles[self.settings.activeprofile].settings.scanbot.all)
 	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.profiles[self.settings.activeprofile].settings.amps.all)
 	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.profiles[self.settings.activeprofile].settings.schematics.all)
 	self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):SetRadioSel("cloth_all", self.profiles[self.settings.activeprofile].settings.cloth.all)
@@ -628,6 +635,7 @@ function AfLogicLoot:GUIToSettings()
 	self.profiles[self.settings.activeprofile].settings.catalysts.other.below = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):GetRadioSel("catalyst_other_below")
 	self.profiles[self.settings.activeprofile].settings.catalysts.other.above = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):GetRadioSel("catalyst_other_above")
 	self.profiles[self.settings.activeprofile].settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
+	self.profiles[self.settings.activeprofile].settings.scanbot.all = self.wndMain:FindChild("frm_scanbot"):FindChild("frm_action"):GetRadioSel("scanbot_all")
 	self.profiles[self.settings.activeprofile].settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
 	self.profiles[self.settings.activeprofile].settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
 	self.profiles[self.settings.activeprofile].settings.cloth.all = self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):GetRadioSel("cloth_all")
@@ -787,6 +795,9 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 					if profile.settings.bags ~= nil then
 						if profile.settings.bags.all ~= nil then self.profiles[idx].settings.bags.all = profile.settings.bags.all end
 					end
+					if profile.settings.scanbot ~= nil then
+						if profile.settings.scanbot.all ~= nil then self.profiles[idx].settings.scanbot.all = profile.settings.scanbot.all end
+					end
 					if profile.settings.amps ~= nil then
 						if profile.settings.amps.all ~= nil then self.profiles[idx].settings.amps.all = profile.settings.amps.all end
 					end
@@ -936,6 +947,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	local family = item:GetItemFamily()
 	local quality = toItemQuality[item:GetItemQuality()]
 	local itype = item:GetItemType()
+	local itemid = item:GetItemId()
 	
 	-- Decor
 	if (itype == 155) then
@@ -1022,6 +1034,32 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.bags.all, L["bags_headline"])
 		return
 	end
+	
+	-- Scanbot Vanity
+	local vanityid = 0
+	local vanity = {
+		31452, -- Aviator Goggles
+		31455, -- Exhaust
+		31446, -- Fez
+		31454, -- Beer Hat
+		31449, -- Pirate Hat
+		31456, -- Bow
+		31457, -- Brain Tank
+		31451, -- Chua Ears
+		31450, -- Miner Hat
+		31447, -- Tesla
+		31448, -- TV Antenna
+		31445, -- Satellite Dish
+		31453, -- Aurin Ears
+	}
+	for _,vanityid in pairs(vanity) do
+		if itemid == vanityid then
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.scanbot.all)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.scanbot.all, L["scanbot_headline"])
+			return
+		end
+	end
+	vanity = nil
 	
 	-- AMPs and Schematics
 	if (family == 32) or (familiy == 19) then
