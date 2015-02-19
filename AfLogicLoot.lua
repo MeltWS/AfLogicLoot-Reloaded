@@ -190,6 +190,7 @@ function AfLogicLoot:new(o)
 	o.hudqueue = {}
 	o.hudid = 0
 	o.hudlast = 0
+	o.hudcounter = 0
 	
     return o
 end
@@ -243,7 +244,7 @@ function AfLogicLoot:OnDocLoaded()
 		Apollo.RegisterSlashCommand("afloot", "OnAfLogicLootOn", self)
 
 		self.timer = ApolloTimer.Create(15.0, false, "OnTimer", self)
-		self.hudtimer = ApolloTimer.Create(15.0, true, "NextHudLog", self)
+		self.hudtimer = ApolloTimer.Create(1.0, true, "OnHudLogTimer", self)
 		self.hudtimer:Stop()
 
 		Apollo.RegisterEventHandler("LootRollUpdate", "OnLootRollUpdate", self)
@@ -1224,15 +1225,28 @@ function AfLogicLoot:HudLog(strMessage)
 end
 
 
+function AfLogicLoot:OnHudLogTimer()
+	self.hudcounter = self.hudcounter - 1
+	if self.hudcounter <= 0 then
+		self:NextHudLog()
+	end
+end
+
+
 function AfLogicLoot:NextHudLog()
-	self.hudtimer:Stop()
 	if self.hudid == self.hudlast then
 		self.wndHud:Show(false)
+		self.hudtimer:Stop()
 		return
 	end
 	self.hudid = self.hudid + 1
 	self.wndHud:SetText(self.hudqueue[self.hudid])
 	self.wndHud:ToFront()
+	if self.wndHud:IsVisible() then
+		self.hudcounter = 5
+	else
+		self.hudcounter = 15
+	end
 	self.wndHud:Show(true)
 	self.hudtimer:Start()
 	Sound.PlayFile("./sounds/chatnotify.wav")
