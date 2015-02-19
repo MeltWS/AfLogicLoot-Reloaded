@@ -994,8 +994,8 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	end
 	
 	-- Dye
-	--  dye collection    dye
-	if (itype == 349) or (itype == 332) then
+	--  dye collection    dye               dye loot bag
+	if (itype == 349) or (itype == 332) or (itype == 450) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.dye.all)
 		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.dye.all, L["dye_headline"])
 		return
