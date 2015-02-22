@@ -459,6 +459,7 @@ function AfLogicLoot:ChoseProfile()
 	if not GroupLib.InGroup() then return end
 	local result = 0
 	local validTry = true
+	local foundMembers = true
 	if GroupLib.InInstance() then
 		if GroupLib.InRaid() then
 			result = tProfileSelect.ini.raid
@@ -466,6 +467,7 @@ function AfLogicLoot:ChoseProfile()
 			if self.guild == nil then 
 				result = tProfileSelect.ini.group[4]
 			else
+				foundMembers = false
 				-- calculate number of randoms
 				local iRandoms = 0
 				local nMembers = GroupLib.GetMemberCount()
@@ -481,6 +483,7 @@ function AfLogicLoot:ChoseProfile()
 					end
 				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
 					if uGroupMember then
+						foundMembers = true
 				  		local strGuildName = uGroupMember:GetGuildName()
 						if strGuildName ~= nil then
 							if strGuildName ~= self.guild then
@@ -504,6 +507,9 @@ function AfLogicLoot:ChoseProfile()
 		else
 			result = tProfileSelect.world.group
 		end
+	end
+	if not foundMembers then
+		validTry = false
 	end
 	if validTry then
 		if self.scene ~= result then
