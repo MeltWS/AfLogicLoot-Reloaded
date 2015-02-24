@@ -12,7 +12,7 @@ L["crafting"]   = "Crafting"
 L["profiles"]   = "Profiles"
 
 -- global options
-L["chk_log"] = "log automatic options to chat"
+L["chk_log"] = "log automatic actions to chat"
 
 -- quality
 L["inferior"]         = "Inferior"

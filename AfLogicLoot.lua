@@ -93,7 +93,7 @@ function AfLogicLoot:new(o)
 		profiles = 1,
 		lastprofile = 1,
 		activeprofile = 1,
-		automaticprofiles = true,
+		automaticprofiles = false,
 		profileselector = {
 			[tProfileSelect.ini.group[0]] = 2,
 			[tProfileSelect.ini.group[1]] = 2,
@@ -194,6 +194,7 @@ function AfLogicLoot:new(o)
 	o.hudid = 0
 	o.hudlast = 0
 	o.hudcounter = 0
+	o.debug = false
 	
     return o
 end
@@ -441,6 +442,9 @@ function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 		self:SetStatus(false)
 	elseif strParam == "toggle" then
 		self:SetStatus(not self.settings.active)
+	elseif strParam == "debug" then
+		self.debug = (self.debug == false)
+		self:log("debug: "..tostring(self.debug))
 	else
 		self.wndMain:Invoke()
 		self:SettingsToGUI()
@@ -464,6 +468,10 @@ function AfLogicLoot:ChoseProfile()
 		if GroupLib.InRaid() then
 			result = tProfileSelect.ini.raid
 		else
+			local uMe = GameLib.GetPlayerUnit()
+			if uMe then
+				self.guild = uMe:GetGuildName()
+			end
 			if self.guild == nil then 
 				result = tProfileSelect.ini.group[4]
 			else
@@ -471,10 +479,6 @@ function AfLogicLoot:ChoseProfile()
 				-- calculate number of randoms
 				local iRandoms = 0
 				local nMembers = GroupLib.GetMemberCount()
-				local uMe = GameLib.GetPlayerUnit()
-				if uMe then
-					self.guild = uMe:GetGuildName()
-				end
 				for idx = 1, nMembers, 1 do
 					local uMember = GroupLib.GetGroupMember(idx)
 					local thisTry = false
@@ -486,10 +490,16 @@ function AfLogicLoot:ChoseProfile()
 						foundMembers = true
 				  		local strGuildName = uGroupMember:GetGuildName()
 						if strGuildName ~= nil then
+							if self.debug then
+								self:log(idx..": "..uGroupMember:GetName()..": "..strGuildName)
+							end
 							if strGuildName ~= self.guild then
 								iRandoms = iRandoms + 1
 							end
 						else
+							if self.debug then
+								self:log(idx..": "..uGroupMember:GetName()..": no guild")
+							end
 							iRandoms = iRandoms + 1
 						end
 					else
@@ -510,6 +520,9 @@ function AfLogicLoot:ChoseProfile()
 	end
 	if not foundMembers then
 		validTry = false
+	end
+	if self.debug then
+		self:log("foundMembers: "..tostring(foundMembers)..", validTry: "..tostring(validTry))
 	end
 	if validTry then
 		if self.scene ~= result then
