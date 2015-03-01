@@ -4,6 +4,7 @@
 -----------------------------------------------------------------------------------------------
  
 require "Window"
+require "Unit"
 require "GameLib"
 require "GroupLib"
 require "ChatSystemLib"
@@ -480,11 +481,6 @@ function AfLogicLoot:ChoseProfile()
 				local iRandoms = 0
 				local nMembers = GroupLib.GetMemberCount()
 				for idx = 1, nMembers, 1 do
-					local uMember = GroupLib.GetGroupMember(idx)
-					local thisTry = false
-					if uMember.bIsOnline then
-						thisTry = true
-					end
 				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
 					if uGroupMember then
 						foundMembers = true
@@ -503,9 +499,7 @@ function AfLogicLoot:ChoseProfile()
 							iRandoms = iRandoms + 1
 						end
 					else
-						if thisTry then
-							validTry = false
-						end
+						validTry = false
 					end
 				end
 				result = tProfileSelect.ini.group[iRandoms]
