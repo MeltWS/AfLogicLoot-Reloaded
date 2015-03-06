@@ -7,6 +7,7 @@ require "Window"
 require "Unit"
 require "GameLib"
 require "GroupLib"
+require "GuildLib"
 require "ChatSystemLib"
  
 -----------------------------------------------------------------------------------------------
@@ -196,6 +197,7 @@ function AfLogicLoot:new(o)
 	o.hudlast = 0
 	o.hudcounter = 0
 	o.debug = false
+	o.guild = {}
 	
     return o
 end
@@ -251,17 +253,22 @@ function AfLogicLoot:OnDocLoaded()
 		self.timer = ApolloTimer.Create(15.0, false, "OnTimer", self)
 		self.hudtimer = ApolloTimer.Create(1.0, true, "OnHudLogTimer", self)
 		self.hudtimer:Stop()
-
+		self.guildtimer = ApolloTimer.Create(30.0, false, "DelayedGuildCheck", self)
+		
 		Apollo.RegisterEventHandler("LootRollUpdate", "OnLootRollUpdate", self)
 
-		Apollo.RegisterEventHandler("Group_Add",        "ChoseProfile",        self)
-		Apollo.RegisterEventHandler("Group_Left",       "ChoseProfile",        self)
-		Apollo.RegisterEventHandler("Group_Updated",    "ChoseProfile",        self)
-		Apollo.RegisterEventHandler("Group_Join",       "ChoseProfile",        self)
-		Apollo.RegisterEventHandler("Group_Remove",     "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Add",         "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Left",        "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Updated",     "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Join",        "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("Group_Remove",      "ChoseProfile",        self)
 				
-		Apollo.RegisterEventHandler("ChangeWorld",      "ChoseProfile",        self)
+		Apollo.RegisterEventHandler("ChangeWorld",       "ChoseProfile",        self)
+
 		
+		Apollo.RegisterEventHandler("GuildRoster",       "UpdateGuildList", self)
+	    Apollo.RegisterEventHandler("GuildMemberChange", "UpdateGuildListSource", self)
+				
 		self.crbAddon = Apollo.GetAddon("NeedVsGreed")
 		
 		self.wndMain:FindChild("lbl_version"):SetText(strVersion)
@@ -453,6 +460,28 @@ function AfLogicLoot:OnAfLogicLootOn(strCommand, strParam)
 end
 
 
+function AfLogicLoot:DelayedGuildCheck()
+	for _,guild in ipairs(GuildLib.GetGuilds()) do
+	    	guild:RequestMembers()
+  	end
+end
+
+
+function AfLogicLoot:UpdateGuildListSource(uGuild)
+	uGuild:RequestMembers()
+end
+
+
+function AfLogicLoot:UpdateGuildList(uGuild, roster)
+	if (uGuild:GetType() == GuildLib.GuildType_Guild) then
+		self.guild = {}
+		for key, value in pairs(roster) do
+			self.guild[value.strName] = true
+		end
+	end
+end
+
+
 function AfLogicLoot:OnConfigure()
 	self.wndMain:Invoke()
 	self:SettingsToGUI()
@@ -463,47 +492,18 @@ function AfLogicLoot:ChoseProfile()
 	if not self.settings.automaticprofiles then return end
 	if not GroupLib.InGroup() then return end
 	local result = 0
-	local validTry = true
-	local foundMembers = true
 	if GroupLib.InInstance() then
 		if GroupLib.InRaid() then
 			result = tProfileSelect.ini.raid
 		else
-			local uMe = GameLib.GetPlayerUnit()
-			if uMe then
-				self.guild = uMe:GetGuildName()
-			end
-			if self.guild == nil then 
-				result = tProfileSelect.ini.group[4]
-			else
-				foundMembers = false
-				-- calculate number of randoms
-				local iRandoms = 0
-				local nMembers = GroupLib.GetMemberCount()
-				for idx = 1, nMembers, 1 do
-				    local uGroupMember = GroupLib.GetUnitForGroupMember(idx)
-					if uGroupMember then
-						foundMembers = true
-				  		local strGuildName = uGroupMember:GetGuildName()
-						if strGuildName ~= nil then
-							if self.debug then
-								self:log(idx..": "..uGroupMember:GetName()..": "..strGuildName)
-							end
-							if strGuildName ~= self.guild then
-								iRandoms = iRandoms + 1
-							end
-						else
-							if self.debug then
-								self:log(idx..": "..uGroupMember:GetName()..": no guild")
-							end
-							iRandoms = iRandoms + 1
-						end
-					else
-						validTry = false
-					end
+			local iRandoms = 0
+			local nMembers = GroupLib.GetMemberCount()
+			for idx = 1, nMembers, 1 do
+				if not self.guild[GroupLib.GetGroupMember(idx).strCharacterName] then
+					iRandoms = iRandoms + 1
 				end
-				result = tProfileSelect.ini.group[iRandoms]
 			end
+			result = tProfileSelect.ini.group[iRandoms]
 		end
 	else
 		if GroupLib.InRaid() then
@@ -512,50 +512,42 @@ function AfLogicLoot:ChoseProfile()
 			result = tProfileSelect.world.group
 		end
 	end
-	if not foundMembers then
-		validTry = false
-	end
-	if self.debug then
-		self:log("foundMembers: "..tostring(foundMembers)..", validTry: "..tostring(validTry))
-	end
-	if validTry then
-		if self.scene ~= result then
-			local bChanged = false
-			self.scene = result
-			if self.settings.scenelog then
-				self:log("Scene switched to "..tProfileSelectToString[result])
-				if self.settings.hudlog then
-					self:HudLog("Scene switched to "..tProfileSelectToString[result])
-				end
+	if self.scene ~= result then
+		local bChanged = false
+		self.scene = result
+		if self.settings.scenelog then
+			self:log("Scene switched to "..tProfileSelectToString[result])
+			if self.settings.hudlog then
+				self:HudLog("Scene switched to "..tProfileSelectToString[result])
 			end
-			
-			if self.settings.profileselector[result] == 1 then
-				if self.settings.active then
-					self:SetStatus(false)
-					bChanged = true
-				end
-			else
-				if not self.settings.active then
-					self:SetStatus(true)
-					bChanged = true
-				end
-			end
-			
-			if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
-				self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
-				if self.settings.hudlog then
-					self:HudLog(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
-				end
-				self.settings.activeprofile = self.settings.profileselectorprofile[result]
-				self:LoadProfiles()
+		end
+		
+		if self.settings.profileselector[result] == 1 then
+			if self.settings.active then
+				self:SetStatus(false)
 				bChanged = true
 			end
-			
-			if bChanged and not self.settings.hudlog then
-				-- even if the scene switched, the resulting profile may be the same
-				-- this fires only, if the profile or the online status changed
-				Sound.PlayFile("./sounds/chatnotify.wav")
+		else
+			if not self.settings.active then
+				self:SetStatus(true)
+				bChanged = true
 			end
+		end
+		
+		if self.settings.activeprofile ~= self.settings.profileselectorprofile[result] then
+			self:log(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			if self.settings.hudlog then
+				self:HudLog(L["msg_switch_profile"]..": "..self.profiles[self.settings.profileselectorprofile[result]].name)
+			end
+			self.settings.activeprofile = self.settings.profileselectorprofile[result]
+			self:LoadProfiles()
+			bChanged = true
+		end
+		
+		if bChanged and not self.settings.hudlog then
+			-- even if the scene switched, the resulting profile may be the same
+			-- this fires only, if the profile or the online status changed
+			Sound.PlayFile("./sounds/chatnotify.wav")
 		end
 	end
 end
