@@ -513,6 +513,7 @@ function AfLogicLoot:ChoseProfile()
 		end
 	end
 	if self.scene ~= result then
+		if result == nil then return end	
 		local bChanged = false
 		self.scene = result
 		if self.settings.scenelog then
