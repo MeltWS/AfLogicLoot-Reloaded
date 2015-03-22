@@ -156,13 +156,17 @@ L["profile_raid_tt"]     = "open world events where you group up in raids"
 L["profile_automatic"   ] = "activate automatic profile selection"
 L["profile_hudlog"]       = "more obstrusive notifications"
 L["profile_log_scene"]    = "also log scene switch"
+L["profile_statistic"]    = "show loot statistic after dungeon"
 
 -- messages
+-- [...] will be replaced by actual values so use them but don't translate them
 
 -- colon and profile name follow
 L["msg_switch_profile"] = "switching to profile"
+L["msg_statistic1"] = "Rolled on [LOOTED] items automatically."
+L["msg_statistic2"] = "You received [WON] items."
+L["msg_statistic3"] = "This is [PERCENT] percent of the whole loot."
 
--- [...] will be replaced by actual values so use them but don't translate them
 L["msg_action_log_sentence"]               = "[ACTION] on [ITEM] from category [CATEGORY]."
 L["msg_action_log_sentence_need"]          = "Selecting NEED"
 L["msg_action_log_sentence_greed"]         = "Selecting GREED"

@@ -156,13 +156,17 @@ L["profile_raid_tt"]     = "Events in der freien Welt, bei denen man sich in Rai
 L["profile_automatic"]    = "automatische Profil-Auswahl aktivieren"
 L["profile_hudlog"]       = "aufdringlichere Benachrichtigung"
 L["profile_log_scene"]    = "auch Szenenwechsel melden"
+L["profile_statistic"]    = "zeige Loot-Statistik nach Dungeon"
 
 -- messages
+-- [...] will be replaced by actual values so use them but don't translate them
 
 -- colon and profile name follow
 L["msg_switch_profile"] = "wechsle zu Profil"
+L["msg_statistic1"] = "[LOOTED] Mal automatisch gewürfelt."
+L["msg_statistic2"] = "Du hast [WON] Items erhalten."
+L["msg_statistic3"] = "Das sind [PERCENT] Prozent des Gesamtloots."
 
--- [...] will be replaced by actual values so use them but don't translate them
 L["msg_action_log_sentence"]               = "[ACTION] auf [ITEM] aus der Kategorie [CATEGORY]."
 L["msg_action_log_sentence_need"]          = "Wähle BEDARF"
 L["msg_action_log_sentence_greed"]         = "Wähle GIER"

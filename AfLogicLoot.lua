@@ -96,6 +96,7 @@ function AfLogicLoot:new(o)
 		lastprofile = 1,
 		activeprofile = 1,
 		automaticprofiles = false,
+		statistic = true,
 		profileselector = {
 			[tProfileSelect.ini.group[0]] = 2,
 			[tProfileSelect.ini.group[1]] = 2,
@@ -198,6 +199,9 @@ function AfLogicLoot:new(o)
 	o.hudcounter = 0
 	o.debug = false
 	o.guild = {}
+	o.looted = 0
+	o.won = 0
+	o.lost = 0
 	
     return o
 end
@@ -255,8 +259,9 @@ function AfLogicLoot:OnDocLoaded()
 		self.hudtimer:Stop()
 		self.guildtimer = ApolloTimer.Create(30.0, false, "DelayedGuildCheck", self)
 		
-		Apollo.RegisterEventHandler("LootRollUpdate", "OnLootRollUpdate", self)
-
+		Apollo.RegisterEventHandler("LootRollUpdate",    "OnLootRollUpdate",    self)
+		Apollo.RegisterEventHandler("LootRollWon",       "OnLootRollWon",       self)
+		
 		Apollo.RegisterEventHandler("Group_Add",         "ChoseProfile",        self)
 		Apollo.RegisterEventHandler("Group_Left",        "ChoseProfile",        self)
 		Apollo.RegisterEventHandler("Group_Updated",     "ChoseProfile",        self)
@@ -264,7 +269,6 @@ function AfLogicLoot:OnDocLoaded()
 		Apollo.RegisterEventHandler("Group_Remove",      "ChoseProfile",        self)
 				
 		Apollo.RegisterEventHandler("ChangeWorld",       "ChoseProfile",        self)
-
 		
 		Apollo.RegisterEventHandler("GuildRoster",       "UpdateGuildList", self)
 	    Apollo.RegisterEventHandler("GuildMemberChange", "UpdateGuildListSource", self)
@@ -425,7 +429,8 @@ function AfLogicLoot:LocalizeWindow()
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetText(L["profile_automatic"])
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_hudlog"):SetText(L["profile_hudlog"])
-	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_log_scene"):SetText(L["profile_log_scene"])	
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_log_scene"):SetText(L["profile_log_scene"])
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_statistic"):SetText(L["profile_statistic"])
 	
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_ini_group"):SetTooltip(L["profile_ini_group_tt"])
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("lbl_profile_group_zero"):SetTooltip(L["profile_group_zero_tt"])
@@ -488,9 +493,33 @@ function AfLogicLoot:OnConfigure()
 end
 
 
+function AfLogicLoot:statistic()
+	if self.looted == 0 then return end
+	if self.settings.statistic then
+		local strMessage = L["msg_statistic1"]
+		strMessage = strMessage:gsub("%[LOOTED%]", tostring(self.looted))
+		self:HudLog(strMessage)
+		strMessage = L["msg_statistic2"]
+		strMessage = strMessage:gsub("%[WON%]", tostring(self.won))
+		self:HudLog(strMessage)
+		strMessage = L["msg_statistic3"]
+		strMessage = strMessage:gsub("%[PERCENT%]", tostring(math.floor((self.won * 100) / (self.won + self.lost))))
+		self:HudLog(strMessage)
+	end
+	self.looted = 0
+	self.won = 0
+	self.lost = 0
+end
+
+
 function AfLogicLoot:ChoseProfile()
 	if not self.settings.automaticprofiles then return end
-	if not GroupLib.InGroup() then return end
+	if not GroupLib.InGroup() then 
+		if (self.looted > 0) or (self.won > 0) or (self.lost > 0) then
+			self:statistic();
+		end
+		return 
+	end
 	local result = 0
 	if GroupLib.InInstance() then
 		if GroupLib.InRaid() then
@@ -515,14 +544,25 @@ function AfLogicLoot:ChoseProfile()
 	if self.scene ~= result then
 		if result == nil then return end	
 		local bChanged = false
-		self.scene = result
+		
+		
 		if self.settings.scenelog then
 			self:log("Scene switched to "..tProfileSelectToString[result])
 			if self.settings.hudlog then
 				self:HudLog("Scene switched to "..tProfileSelectToString[result])
 			end
 		end
-		
+
+		if (self.scene < 7) and (result >= 7) then
+			self:statistic()
+		elseif (self.scene >= 7) and (result < 7) then
+			self.looted = 0
+			self.won = 0
+			self.lost = 0
+		end
+
+		self.scene = result
+				
 		if self.settings.profileselector[result] == 1 then
 			if self.settings.active then
 				self:SetStatus(false)
@@ -605,6 +645,7 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):SetRadioSel("flux_all", self.profiles[self.settings.activeprofile].settings.flux.all)
 	self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):SetRadioSel("prop_all", self.profiles[self.settings.activeprofile].settings.prop.all)
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetCheck(self.settings.automaticprofiles)
+	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_statistic"):SetCheck(self.settings.statistic)
 	local wndToggleButton1 = self.wndMain:FindChild("btnToggleButton1")
 	local wndToggleButton2 = self.wndMain:FindChild("btnToggleButton2")	
 	wndToggleButton1:Show(self.settings.active)
@@ -657,6 +698,7 @@ function AfLogicLoot:GUIToSettings()
 	self.settings.profileselector[tProfileSelect.world.group] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group_world")
 	self.settings.profileselector[tProfileSelect.world.raid] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("raid_world")	
 	self.settings.automaticprofiles = self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):IsChecked()
+	self.settings.statistic = self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_statistic"):IsChecked()
 end
 	
 	
@@ -720,6 +762,7 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 			if tSavedData.settings.hudlog ~= nil then self.settings.hudlog = tSavedData.settings.hudlog end
 			if tSavedData.settings.scenelog ~= nil then self.settings.scenelog = tSavedData.settings.scenelog end
 			if tSavedData.settings.automaticprofiles ~= nil then self.settings.automaticprofiles = tSavedData.settings.automaticprofiles end
+			if tSavedData.settings.statistic ~= nil then self.settings.statistic = tSavedData.settings.statistic end
 			if tSavedData.settings.active ~= nil then self.settings.active = tSavedData.settings.active end
 			if tSavedData.settings.activeprofile ~= nil then 
 				self.settings.activeprofile = tSavedData.settings.activeprofile
@@ -926,6 +969,22 @@ function AfLogicLoot:OnLootRollUpdate()
 	if not self.settings.active then return end
 	for _, LootListEntry in pairs(GameLib.GetLootRolls()) do
 		self:CheckForAutoAction(LootListEntry)
+	end
+end
+
+
+function AfLogicLoot:OnLootRollWon(itemWon, strWinnerName, bNeed)
+	local uMe = GameLib.GetPlayerUnit()
+	local sMe = ""
+	if uMe then
+		sMe = uMe:GetName()
+	else
+		return
+	end
+	if (strWinnerName) and (strWinnerName == sMe) then
+		self.won = self.won + 1
+	else
+		self.lost = self.lost + 1
 	end
 end
 
@@ -1162,6 +1221,7 @@ function AfLogicLoot:DoLootAction(LootID, action)
 		GameLib.PassOnLoot(LootID)
 	end
 	if action == LootAction.none then return end
+	self.looted = self.looted + 1
 	self:CloseOrgLootWindow(LootID)
 end
 
