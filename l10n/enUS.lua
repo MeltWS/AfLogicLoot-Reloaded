@@ -5,10 +5,10 @@ local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("AfLogicLoot
 -- USE SOMETHING LIKE NOTEPAD++ FOR THAT TASK
 
 -- Tabs
-L["equipment1"] = "Equipment 1"
-L["equipment2"] = "Equipment 2"
+L["equipment"] = "Equipment"
+L["crafting1"] = "Crafting 1"
 L["style"]      = "Style"
-L["crafting"]   = "Crafting"
+L["crafting2"]   = "Crafting 2"
 L["profiles"]   = "Profiles"
 
 -- global options
@@ -22,10 +22,6 @@ L["excellent"]        = "Excellent"
 L["superb"]           = "Superb"
 L["legendary"]        = "Legendary"
 L["artifact"]         = "Artifact"
--- "Major" like in "Sign of Water - Major"
-L["excellent_major"]  = "Excellent (Major)"
--- "Sign of Water - Eldan"
-L["superb_eldan"]     = "Superb (Eldan)"
 
 -- actions
 L["need"]      = "Need"
@@ -47,34 +43,37 @@ L["equipment_action_tooltip"]   = "Do this with equipment of specified quality a
 L["equipment_no_need_tooltip"]  = "Do this with equipment where you are not allowed to press \"need\"."
 L["equipment_not_wearable"]     = "not wearable"
 
--- sigils
-L["sigils_headline"]          = "Sigils"
-L["sigils_headline_tooltip"]  = "Stuff like \"Sign of Water\"."
-L["sigils_selected_tooltip"]  = "Do this with sigils of the specified quality and below."
-L["sigils_otherwise_tooltip"] = "Do this with sigils above the specified quality."
-
 -- fragments
 L["fragments_headline"]         = "Fragments"
-L["fragments_headline_tooltip"] = "Stuff like \"Augmented Rune Fragment\" or \"Rune Fragment of the Esper\"."
-
--- runic flux
-L["flux_headline"]         = "Runic Flux"
-L["flux_headline_tooltip"] = "\"Runic Elemental Flux\" and \"Eldan Runic Module\", stuff you need to change or activate rune slots."
+L["fragments_headline_tooltip"] = "Stuff like \"Rune Fragment\""
 
 -- proprietary material
 L["prop_headline"]         = "Proprietary Material"
 L["prop_headline_tooltip"] = "\"Partial Primal Pattern\", \"Encrypted Datashard\", \"Tarnished Eldan Gift\"."
 
--- AMPs
-L["amps_headline"]         = "AMPs you don't need"
-L["amps_headline_tooltip"] = "AMPs you need will be \"needed\" automatically."
-
--- AMPs and schematics you really need
-L["useful_amps_schematics"] = "AMP and Schematics you don't already own"
-
 -- bags
 L["bags_headline"]         = "Bags"
 L["bags_headline_tooltip"] = "Bags expand your inventory."
+
+-- signs
+L["signs_headline"]         = "Signs"
+L["signs_headline_tooltip"] = "Elemental signs for rune crafting and making runes."
+
+-- setfocus
+L["setfocus_headline"]         = "Set Focus"
+L["setfocus_headline_tooltip"] = "Set focus are used to create rune sets."
+
+-- runes
+L["runes_headline"]         = "Runes"
+L["runes_headline_tooltip"] = "Rune you can use in items sockets."
+
+-- matrix
+L["matrix_headline"]         = "Matrix"
+L["matrix_headline_tooltip"] = "Matrix are used for crafting."
+
+-- Pets
+L["pets_headline"]         = "Pets"
+L["pets_headline_tooltip"] = "Companion pets"
 
 -- scanbot vanity
 L["scanbot_headline"]         = "ScanBot Vanity"
@@ -96,6 +95,13 @@ L["fabkits_otherwise_tooltip"] = "Do this with FABkits above the specified quali
 L["dye_headline"]         = "Dye"
 L["dye_headline_tooltip"] = "Dye and dye collection."
 
+-- schematics you really need
+L["useful_schematics"] = "Schematics you don't already own"
+
+-- schematics
+L["schematics_headline"]         = "Schematics you don't need"
+L["schematics_headline_tooltip"] = "Schematics you need will be \"needed\" automatically."
+
 -- catalysts_my
 L["catalysts_my_headline"]          = "Catalysts you could use"
 L["catalysts_my_headline_tooltip"]  = "Catalysts help you craft. This box is for catalysts that match one of your tradeskills."
@@ -107,10 +113,6 @@ L["catalysts_other_headline"]          = "Other Catalysts"
 L["catalysts_other_headline_tooltip"]  = "Catalysts that don't match one of your tradeskills."
 L["catalysts_other_selected_tooltip"]  = "Do this with catalysts of the specified quality and below."
 L["catalysts_other_otherwise_tooltip"] = "Do this with catalysts above the specified quality."
-
--- schematics
-L["schematics_headline"]         = "Schematics you don't need"
-L["schematics_headline_tooltip"] = "Schematics you need will be \"needed\" automatically."
 
 -- survivalist
 L["survivalist_headline"]         = "Survivalist"

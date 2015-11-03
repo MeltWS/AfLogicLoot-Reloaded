@@ -20,7 +20,7 @@ local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:GetLocale("AfLogicLoot
 -- Constants
 -----------------------------------------------------------------------------------------------
 
-local strVersion = "Version: @project-version@"
+local strVersion = "Version: v1.2.0"
 
 local LootAction = {
 	need = 1,
@@ -141,11 +141,6 @@ function AfLogicLoot:new(o)
 			below = LootAction.none,
 			noneed = LootAction.none,
 		},
-		sigils = {
-			quality = ItemQuality.good,
-			below = LootAction.none,
-			above = LootAction.none,
-		},
 		catalysts = {
 			my = {
 				quality = ItemQuality.good,
@@ -164,7 +159,19 @@ function AfLogicLoot:new(o)
 		scanbot = {
 			all = LootAction.none,
 		},
-		amps = {
+		matrix = {
+			all = LootAction.none,
+		},
+		signs = {
+			all = LootAction.none,
+		},
+		setfocus = {
+			all = LootAction.none,
+		},
+		runes = {
+			all = LootAction.none,
+		},
+		pets = {
 			all = LootAction.none,
 		},
 		schematics = {
@@ -281,7 +288,7 @@ function AfLogicLoot:OnDocLoaded()
 			self:OnConfigure()
 			self.settings.firstconfigureshown = true
 		end
-		self.wndMain:FindChild("btn_equipment1"):SetCheck(true)
+		self.wndMain:FindChild("btn_equipment"):SetCheck(true)
 		self:SwitchToTab(1)
 		
 		local i
@@ -331,18 +338,16 @@ end
 function AfLogicLoot:LocalizeWindow()
 	local i
 	
-	self.wndMain:FindChild("btn_equipment1"):SetText(L["equipment1"])
-	self.wndMain:FindChild("btn_equipment1"):SetText(L["equipment1"])
+	self.wndMain:FindChild("btn_equipment"):SetText(L["equipment"])
 	self.wndMain:FindChild("btn_style"):SetText(L["style"])
-	self.wndMain:FindChild("btn_crafting"):SetText(L["crafting"])
+	self.wndMain:FindChild("btn_crafting1"):SetText(L["crafting1"])
+	self.wndMain:FindChild("btn_crafting2"):SetText(L["crafting2"])
 	self.wndMain:FindChild("btn_profiles"):SetText(L["profiles"])
 	
 	self.wndMain:FindChild("chk_log"):SetText(L["chk_log"])
 	
 	self:RecursiveTranslation(self.wndMain)
 	
-	self.wndMain:FindChild("chk_excellent_major"):SetText(L["excellent_major"])
-	self.wndMain:FindChild("chk_superb_eldan"):SetText(L["superb_eldan"])
 	self.wndMain:FindChild("lbl_caption_no_need"):SetText(L["no_need"])
 	
 	self.wndMain:FindChild("frm_equip"):FindChild("lbl_category_headline"):SetText(L["equipment_headline"])
@@ -350,28 +355,32 @@ function AfLogicLoot:LocalizeWindow()
 	self.wndMain:FindChild("frm_equip"):FindChild("lbl_caption_action"):SetTooltip(L["equipment_action_tooltip"])
 	self.wndMain:FindChild("frm_equip"):FindChild("lbl_caption_no_need"):SetTooltip(L["equipment_no_need_tooltip"])
 	
-	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_category_headline"):SetText(L["sigils_headline"])
-	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_category_headline"):SetTooltip(L["sigils_headline_tooltip"])
-	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_caption_selected"):SetTooltip(L["sigils_selected_tooltip"])
-	self.wndMain:FindChild("frm_sigils"):FindChild("lbl_caption_otherwise"):SetTooltip(L["sigils_otherwise_tooltip"])
-
 	self.wndMain:FindChild("frm_fragments"):FindChild("lbl_category_headline"):SetText(L["fragments_headline"])
 	self.wndMain:FindChild("frm_fragments"):FindChild("lbl_category_headline"):SetTooltip(L["fragments_headline_tooltip"])
 	
-	self.wndMain:FindChild("frm_flux"):FindChild("lbl_category_headline"):SetText(L["flux_headline"])
-	self.wndMain:FindChild("frm_flux"):FindChild("lbl_category_headline"):SetTooltip(L["flux_headline_tooltip"])
-
 	self.wndMain:FindChild("frm_prop"):FindChild("lbl_category_headline"):SetText(L["prop_headline"])
 	self.wndMain:FindChild("frm_prop"):FindChild("lbl_category_headline"):SetTooltip(L["prop_headline_tooltip"])
 
-	self.wndMain:FindChild("frm_amps"):FindChild("lbl_category_headline"):SetText(L["amps_headline"])
-	self.wndMain:FindChild("frm_amps"):FindChild("lbl_category_headline"):SetTooltip(L["amps_headline_tooltip"])
+	self.wndMain:FindChild("frm_matrix"):FindChild("lbl_category_headline"):SetText(L["matrix_headline"])
+	self.wndMain:FindChild("frm_matrix"):FindChild("lbl_category_headline"):SetTooltip(L["matrix_headline_tooltip"])
 
 	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetText(L["bags_headline"])
 	self.wndMain:FindChild("frm_bags"):FindChild("lbl_category_headline"):SetTooltip(L["bags_headline_tooltip"])
 
 	self.wndMain:FindChild("frm_scanbot"):FindChild("lbl_category_headline"):SetText(L["scanbot_headline"])
 	self.wndMain:FindChild("frm_scanbot"):FindChild("lbl_category_headline"):SetTooltip(L["scanbot_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_signs"):FindChild("lbl_category_headline"):SetText(L["signs_headline"])
+	self.wndMain:FindChild("frm_signs"):FindChild("lbl_category_headline"):SetTooltip(L["signs_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_setfocus"):FindChild("lbl_category_headline"):SetText(L["setfocus_headline"])
+	self.wndMain:FindChild("frm_setfocus"):FindChild("lbl_category_headline"):SetTooltip(L["setfocus_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_runes"):FindChild("lbl_category_headline"):SetText(L["runes_headline"])
+	self.wndMain:FindChild("frm_runes"):FindChild("lbl_category_headline"):SetTooltip(L["runes_headline_tooltip"])
+
+	self.wndMain:FindChild("frm_pets"):FindChild("lbl_category_headline"):SetText(L["pets_headline"])
+	self.wndMain:FindChild("frm_pets"):FindChild("lbl_category_headline"):SetTooltip(L["pets_headline_tooltip"])
 
 	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetText(L["decor_headline"])
 	self.wndMain:FindChild("frm_decor"):FindChild("lbl_category_headline"):SetTooltip(L["decor_headline_tooltip"])
@@ -627,9 +636,6 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):SetRadioSel("equipment_quality", self.profiles[self.settings.activeprofile].settings.equipment.quality)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):SetRadioSel("equipment_below", self.profiles[self.settings.activeprofile].settings.equipment.below - 1)
 	self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):SetRadioSel("equipment_noneed", self.profiles[self.settings.activeprofile].settings.equipment.noneed - 1)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):SetRadioSel("sigil_quality", self.profiles[self.settings.activeprofile].settings.sigils.quality)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):SetRadioSel("sigil_below", self.profiles[self.settings.activeprofile].settings.sigils.below)
-	self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):SetRadioSel("sigil_above", self.profiles[self.settings.activeprofile].settings.sigils.above)
 	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):SetRadioSel("catalyst_quality_my", self.profiles[self.settings.activeprofile].settings.catalysts.my.quality)
 	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):SetRadioSel("catalyst_my_below", self.profiles[self.settings.activeprofile].settings.catalysts.my.below)
 	self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):SetRadioSel("catalyst_my_above", self.profiles[self.settings.activeprofile].settings.catalysts.my.above)
@@ -638,11 +644,14 @@ function AfLogicLoot:SettingsToGUI()
 	self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):SetRadioSel("catalyst_other_above", self.profiles[self.settings.activeprofile].settings.catalysts.other.above)
 	self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):SetRadioSel("bags_all", self.profiles[self.settings.activeprofile].settings.bags.all)
 	self.wndMain:FindChild("frm_scanbot"):FindChild("frm_action"):SetRadioSel("scanbot_all", self.profiles[self.settings.activeprofile].settings.scanbot.all)
-	self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):SetRadioSel("amps_all", self.profiles[self.settings.activeprofile].settings.amps.all)
+	self.wndMain:FindChild("frm_signs"):FindChild("frm_action"):SetRadioSel("signs_all", self.profiles[self.settings.activeprofile].settings.signs.all)
+	self.wndMain:FindChild("frm_setfocus"):FindChild("frm_action"):SetRadioSel("setfocus_all", self.profiles[self.settings.activeprofile].settings.setfocus.all)
+	self.wndMain:FindChild("frm_runes"):FindChild("frm_action"):SetRadioSel("runes_all", self.profiles[self.settings.activeprofile].settings.runes.all)
+	self.wndMain:FindChild("frm_pets"):FindChild("frm_action"):SetRadioSel("pets_all", self.profiles[self.settings.activeprofile].settings.pets.all)
+	self.wndMain:FindChild("frm_matrix"):FindChild("frm_action"):SetRadioSel("matrix_all", self.profiles[self.settings.activeprofile].settings.matrix.all)
 	self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):SetRadioSel("schematics_all", self.profiles[self.settings.activeprofile].settings.schematics.all)
 	self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):SetRadioSel("cloth_all", self.profiles[self.settings.activeprofile].settings.cloth.all)
 	self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):SetRadioSel("dye_all", self.profiles[self.settings.activeprofile].settings.dye.all)
-	self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):SetRadioSel("flux_all", self.profiles[self.settings.activeprofile].settings.flux.all)
 	self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):SetRadioSel("prop_all", self.profiles[self.settings.activeprofile].settings.prop.all)
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_automatic_profiles"):SetCheck(self.settings.automaticprofiles)
 	self.wndMain:FindChild("frm_automatic_for_the_people"):FindChild("chk_statistic"):SetCheck(self.settings.statistic)
@@ -672,9 +681,6 @@ function AfLogicLoot:GUIToSettings()
 	self.profiles[self.settings.activeprofile].settings.equipment.quality = self.wndMain:FindChild("frm_equip"):FindChild("frm_quality"):GetRadioSel("equipment_quality")
 	self.profiles[self.settings.activeprofile].settings.equipment.below = self.wndMain:FindChild("frm_equip"):FindChild("frm_action"):GetRadioSel("equipment_below") + 1
 	self.profiles[self.settings.activeprofile].settings.equipment.noneed = self.wndMain:FindChild("frm_equip"):FindChild("frm_action_noneed"):GetRadioSel("equipment_noneed") + 1
-	self.profiles[self.settings.activeprofile].settings.sigils.quality = self.wndMain:FindChild("frm_sigils"):FindChild("frm_quality"):GetRadioSel("sigil_quality")
-	self.profiles[self.settings.activeprofile].settings.sigils.below = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_below"):GetRadioSel("sigil_below")
-	self.profiles[self.settings.activeprofile].settings.sigils.above = self.wndMain:FindChild("frm_sigils"):FindChild("frm_action_above"):GetRadioSel("sigil_above")	
 	self.profiles[self.settings.activeprofile].settings.catalysts.my.quality = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_quality"):GetRadioSel("catalyst_quality_my")
 	self.profiles[self.settings.activeprofile].settings.catalysts.my.below = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_below"):GetRadioSel("catalyst_my_below")
 	self.profiles[self.settings.activeprofile].settings.catalysts.my.above = self.wndMain:FindChild("frm_catalysts_my"):FindChild("frm_action_above"):GetRadioSel("catalyst_my_above")
@@ -682,12 +688,15 @@ function AfLogicLoot:GUIToSettings()
 	self.profiles[self.settings.activeprofile].settings.catalysts.other.below = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_below"):GetRadioSel("catalyst_other_below")
 	self.profiles[self.settings.activeprofile].settings.catalysts.other.above = self.wndMain:FindChild("frm_catalysts_other"):FindChild("frm_action_above"):GetRadioSel("catalyst_other_above")
 	self.profiles[self.settings.activeprofile].settings.bags.all = self.wndMain:FindChild("frm_bags"):FindChild("frm_action"):GetRadioSel("bags_all")
+	self.profiles[self.settings.activeprofile].settings.signs.all = self.wndMain:FindChild("frm_signs"):FindChild("frm_action"):GetRadioSel("signs_all")
+	self.profiles[self.settings.activeprofile].settings.setfocus.all = self.wndMain:FindChild("frm_setfocus"):FindChild("frm_action"):GetRadioSel("setfocus_all")
+	self.profiles[self.settings.activeprofile].settings.runes.all = self.wndMain:FindChild("frm_runes"):FindChild("frm_action"):GetRadioSel("runes_all")
+	self.profiles[self.settings.activeprofile].settings.pets.all = self.wndMain:FindChild("frm_pets"):FindChild("frm_action"):GetRadioSel("pets_all")
 	self.profiles[self.settings.activeprofile].settings.scanbot.all = self.wndMain:FindChild("frm_scanbot"):FindChild("frm_action"):GetRadioSel("scanbot_all")
-	self.profiles[self.settings.activeprofile].settings.amps.all = self.wndMain:FindChild("frm_amps"):FindChild("frm_action"):GetRadioSel("amps_all")
+	self.profiles[self.settings.activeprofile].settings.matrix.all = self.wndMain:FindChild("frm_matrix"):FindChild("frm_action"):GetRadioSel("matrix_all")
 	self.profiles[self.settings.activeprofile].settings.schematics.all = self.wndMain:FindChild("frm_schematics"):FindChild("frm_action"):GetRadioSel("schematics_all")
 	self.profiles[self.settings.activeprofile].settings.cloth.all = self.wndMain:FindChild("frm_cloth"):FindChild("frm_action"):GetRadioSel("cloth_all")
 	self.profiles[self.settings.activeprofile].settings.dye.all = self.wndMain:FindChild("frm_dye"):FindChild("frm_action"):GetRadioSel("dye_all")
-	self.profiles[self.settings.activeprofile].settings.flux.all = self.wndMain:FindChild("frm_flux"):FindChild("frm_action"):GetRadioSel("flux_all")
 	self.profiles[self.settings.activeprofile].settings.prop.all = self.wndMain:FindChild("frm_prop"):FindChild("frm_action"):GetRadioSel("prop_all")
 	self.settings.profileselector[tProfileSelect.ini.group[0]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group0")
 	self.settings.profileselector[tProfileSelect.ini.group[1]] = self.wndMain:FindChild("frm_automatic_for_the_people"):GetRadioSel("group1")
@@ -824,11 +833,6 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 						if profile.settings.equipment.below ~= nil then self.profiles[idx].settings.equipment.below = profile.settings.equipment.below end
 						if profile.settings.equipment.noneed ~= nil then self.profiles[idx].settings.equipment.noneed = profile.settings.equipment.noneed end
 					end
-					if profile.settings.sigils ~= nil then
-						if profile.settings.sigils.quality ~= nil then self.profiles[idx].settings.sigils.quality = profile.settings.sigils.quality end
-						if profile.settings.sigils.below ~= nil then self.profiles[idx].settings.sigils.below = profile.settings.sigils.below end
-						if profile.settings.sigils.above ~= nil then self.profiles[idx].settings.sigils.above = profile.settings.sigils.above end
-					end			
 					if profile.settings.catalysts ~= nil then
 						if profile.settings.catalysts.my ~= nil then
 							if profile.settings.catalysts.my.quality ~= nil then self.profiles[idx].settings.catalysts.my.quality = profile.settings.catalysts.my.quality end
@@ -844,11 +848,23 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 					if profile.settings.bags ~= nil then
 						if profile.settings.bags.all ~= nil then self.profiles[idx].settings.bags.all = profile.settings.bags.all end
 					end
+					if profile.settings.signs ~= nil then
+						if profile.settings.signs.all ~= nil then self.profiles[idx].settings.signs.all = profile.settings.signs.all end
+					end
+					if profile.settings.setfocus ~= nil then
+						if profile.settings.setfocus.all ~= nil then self.profiles[idx].settings.setfocus.all = profile.settings.setfocus.all end
+					end
+					if profile.settings.runes ~= nil then
+						if profile.settings.runes.all ~= nil then self.profiles[idx].settings.runes.all = profile.settings.runes.all end
+					end
+					if profile.settings.pets ~= nil then
+						if profile.settings.pets.all ~= nil then self.profiles[idx].settings.pets.all = profile.settings.pets.all end
+					end
 					if profile.settings.scanbot ~= nil then
 						if profile.settings.scanbot.all ~= nil then self.profiles[idx].settings.scanbot.all = profile.settings.scanbot.all end
 					end
-					if profile.settings.amps ~= nil then
-						if profile.settings.amps.all ~= nil then self.profiles[idx].settings.amps.all = profile.settings.amps.all end
+					if profile.settings.matrix ~= nil then
+						if profile.settings.matrix.all ~= nil then self.profiles[idx].settings.matrix.all = profile.settings.matrix.all end
 					end
 					if profile.settings.schematics ~= nil then
 						if profile.settings.schematics.all ~= nil then self.profiles[idx].settings.schematics.all = profile.settings.schematics.all end
@@ -858,9 +874,6 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 					end
 					if profile.settings.dye ~= nil then
 						if profile.settings.dye.all ~= nil then self.profiles[idx].settings.dye.all = profile.settings.dye.all end
-					end
-					if profile.settings.flux ~= nil then
-						if profile.settings.flux.all ~= nil then self.profiles[idx].settings.flux.all = profile.settings.flux.all end
 					end
 					if profile.settings.prop ~= nil then
 						if profile.settings.prop.all ~= nil then self.profiles[idx].settings.prop.all = profile.settings.prop.all end
@@ -918,11 +931,6 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 					if tSavedData.settings.equipment.below ~= nil then self.profiles[1].settings.equipment.below = tSavedData.settings.equipment.below end
 					if tSavedData.settings.equipment.noneed ~= nil then self.profiles[1].settings.equipment.noneed = tSavedData.settings.equipment.noneed end
 				end
-				if tSavedData.settings.sigils ~= nil then
-					if tSavedData.settings.sigils.quality ~= nil then self.profiles[1].settings.sigils.quality = tSavedData.settings.sigils.quality end
-					if tSavedData.settings.sigils.below ~= nil then self.profiles[1].settings.sigils.below = tSavedData.settings.sigils.below end
-					if tSavedData.settings.sigils.above ~= nil then self.profiles[1].settings.sigils.above = tSavedData.settings.sigils.above end
-				end			
 				if tSavedData.settings.catalysts ~= nil then
 					if tSavedData.settings.catalysts.my ~= nil then
 						if tSavedData.settings.catalysts.my.quality ~= nil then self.profiles[1].settings.catalysts.my.quality = tSavedData.settings.catalysts.my.quality end
@@ -938,8 +946,20 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 				if tSavedData.settings.bags ~= nil then
 					if tSavedData.settings.bags.all ~= nil then self.profiles[1].settings.bags.all = tSavedData.settings.bags.all end
 				end
-				if tSavedData.settings.amps ~= nil then
-					if tSavedData.settings.amps.all ~= nil then self.profiles[1].settings.amps.all = tSavedData.settings.amps.all end
+				if tSavedData.settings.signs ~= nil then
+					if tSavedData.settings.signs.all ~= nil then self.profiles[1].settings.signs.all = tSavedData.settings.signs.all end
+				end
+				if tSavedData.settings.setfocus ~= nil then
+					if tSavedData.settings.setfocus.all ~= nil then self.profiles[1].settings.setfocus.all = tSavedData.settings.setfocus.all end
+				end
+				if tSavedData.settings.runes ~= nil then
+					if tSavedData.settings.runes.all ~= nil then self.profiles[1].settings.runes.all = tSavedData.settings.runes.all end
+				end
+				if tSavedData.settings.matrix ~= nil then
+					if tSavedData.settings.matrix.all ~= nil then self.profiles[1].settings.matrix.all = tSavedData.settings.matrix.all end
+				end
+				if tSavedData.settings.pets ~= nil then
+					if tSavedData.settings.pets.all ~= nil then self.profiles[1].settings.pets.all = tSavedData.settings.pets.all end
 				end
 				if tSavedData.settings.schematics ~= nil then
 					if tSavedData.settings.schematics.all ~= nil then self.profiles[1].settings.schematics.all = tSavedData.settings.schematics.all end
@@ -949,9 +969,6 @@ function AfLogicLoot:OnRestore(eType, tSavedData)
 				end
 				if tSavedData.settings.dye ~= nil then
 					if tSavedData.settings.dye.all ~= nil then self.profiles[1].settings.dye.all = tSavedData.settings.dye.all end
-				end
-				if tSavedData.settings.flux ~= nil then
-					if tSavedData.settings.flux.all ~= nil then self.profiles[1].settings.flux.all = tSavedData.settings.flux.all end
 				end
 				if tSavedData.settings.prop ~= nil then
 					if tSavedData.settings.prop.all ~= nil then self.profiles[1].settings.prop.all = tSavedData.settings.prop.all end
@@ -1039,21 +1056,9 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	end	
 		
 	-- Fragments
-	if (itype == 359) then
+	if (itype == 515) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.fragments.all)
 		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.fragments.all, L["fragments_headline"])
-		return
-	end
-
-	-- Sigils
-	if (category == 120) then
-		if quality <= self.profiles[self.settings.activeprofile].settings.sigils.quality then
-			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.below)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.below, L["sigils_headline"]..", "..L["msg_action_log_sentence_quality_below"])
-		else
-			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.sigils.above)
-			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.sigils.above, L["sigils_headline"]..", "..L["msg_action_log_sentence_quality_above"])
-		end		
 		return
 	end
 		
@@ -1078,14 +1083,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.dye.all, L["dye_headline"])
 		return
 	end
-		
-	-- Flux
-	if (itype == 465) then
-		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.flux.all)
-		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.flux.all, L["flux_headline"])
-		return
-	end
-	
+			
 	-- Proprietary Material
 	if (category == 128) then
 		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.prop.all)
@@ -1099,7 +1097,44 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.bags.all, L["bags_headline"])
 		return
 	end
+
+	-- Signs
+	--	   fire   			 air			  fusion			 life			   water			earth				logic
+	if (itype == 339) or (itype == 342) or (itype == 345) or (itype == 343) or (itype == 340) or (itype == 344) or (itype == 341) then
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.signs.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.signs.all, L["signs_headline"])
+		return
+	end
+
+	-- Setfocus
+	if (itype == 516) then
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.signs.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.signs.all, L["setfocus_headline"])
+		return
+	end
+
+	-- Runes
+	if (category == 175) then
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.runes.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.runes.all, L["runes_headline"])
+		return
+	end
 	
+	-- Pet
+	if (category == 98) then
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.pets.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.pets.all, L["pets_headline"])
+		return
+	end
+	
+	-- Matrix
+	if (itype == 527) or (itype == 525) then
+		self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.matrix.all)
+		self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.matrix.all, L["matrix_headline"])
+		return
+	end
+	
+		
 	-- Scanbot Vanity
 	local vanityid = 0
 	local vanity = {
@@ -1126,8 +1161,8 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	end
 	vanity = nil
 	
-	-- AMPs and Schematics
-	if (family == 32) or (familiy == 19) then
+	-- Schematics
+	if (family == 19) then
 		local tItemDI = item:GetDetailedInfo().tPrimary
 		local bNeed = false
 		
@@ -1140,15 +1175,10 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 		end
 		if bNeed then
 			self:DoLootAction(lootid, LootAction.need)
-			self:PostLootMessage(item, LootAction.need, L["useful_amps_schematics"])
+			self:PostLootMessage(item, LootAction.need, L["useful_schematics"])
 		else
-			if (family == 32) then
-				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.amps.all)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.amps.all, L["amps_headline"])
-			else
-				self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.schematics.all)
-				self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.schematics.all, L["schematics_headline"])
-			end
+			self:DoLootAction(lootid, self.profiles[self.settings.activeprofile].settings.schematics.all)
+			self:PostLootMessage(item, self.profiles[self.settings.activeprofile].settings.schematics.all, L["schematics_headline"])
 		end
 		
 		return
@@ -1208,7 +1238,7 @@ function AfLogicLoot:CheckForAutoAction(LootListEntry)
 	end
 	
 	-- Not categorized now: analyze it
-	-- self:analyze(item)
+	self:analyze(item)
 end
 
 
@@ -1379,10 +1409,10 @@ end
 
 
 function AfLogicLoot:SwitchToTab(iTab)
-	self.wndMain:FindChild("Tab_Equipment1"):Show(iTab == 1)
-	self.wndMain:FindChild("Tab_Equipment2"):Show(iTab == 2)
-	self.wndMain:FindChild("Tab_Style"):Show(iTab == 3)
-	self.wndMain:FindChild("Tab_Crafting"):Show(iTab == 4)
+	self.wndMain:FindChild("Tab_Equipment"):Show(iTab == 1)
+	self.wndMain:FindChild("Tab_Crafting1"):Show(iTab == 2)
+	self.wndMain:FindChild("Tab_Crafting2"):Show(iTab == 3)
+	self.wndMain:FindChild("Tab_Style"):Show(iTab == 4)
 	self.wndMain:FindChild("Tab_Profiles"):Show(iTab == 5)
 end
 

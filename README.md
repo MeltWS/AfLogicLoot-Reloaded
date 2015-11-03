@@ -1,6 +1,8 @@
-# afLogicLoot
+﻿# afLogicLoot
 
 [WildStar](http://www.wildstar-online.com)-Addon
+
+DISCLAIMER: I did not develop this addon, all credit goes to the original author arnefi, all I did was change , add or remove a few things to make it work good for WS reloaded.
 
 ## Description
 

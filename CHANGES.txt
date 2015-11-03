@@ -1,0 +1,21 @@
+lightweight tag ad8129770207663830414a1f56616bc86c7c875b v1.1.0
+Author:	arnefi <arnefi@users.noreply.github.com>
+Date:	Sun Mar 22 21:14:56 2015 +0100
+
+commit ad8129770207663830414a1f56616bc86c7c875b
+Author: arnefi <arnefi@users.noreply.github.com>
+Date:   Sun Mar 22 21:14:56 2015 +0100
+
+    v1.1.0
+
+commit a80556340ba27cc10e0bc2223f236e0fac6e19bc
+Author: arnefi <arnefi@users.noreply.github.com>
+Date:   Sun Mar 22 21:12:49 2015 +0100
+
+    Statistics at the end of dungeons
+
+  v1.2.0
+
+https://github.com/MeltWS/AfLogicLoot-Reloaded
+
+Modification for wildstar reloaded
