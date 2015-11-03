@@ -1,4 +1,4 @@
-local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("AfLogicLoot", "enUS", true)
+local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("AfLogicLootReloaded", "enUS", true)
 
 
 -- DON'T EDIT WITH HOUSTON AS IT LOSES ENCODING SETTINGS
